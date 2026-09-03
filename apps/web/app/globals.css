@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary-50: #EEF2FF;
+  --color-primary-100: #E0E7FF;
+  --color-primary-500: #6366F1;
+  --color-primary-600: #4F46E5;
+  --color-primary-700: #4338CA;
+  --color-primary-900: #312E81;
+
+  --color-success-500: #16A34A;
+  --color-warning-500: #D97706;
+  --color-danger-500: #DC2626;
+  --color-info-500: #2563EB;
+
+  --color-success-bg: #ECFDF5;
+  --color-warning-bg: #FFFBEB;
+  --color-danger-bg: #FEF2F2;
+  --color-info-bg: #EFF6FF;
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #4B5563;
+  --color-text-muted: #9CA3AF;
+  --color-text-disabled: #D1D5DB;
+
+  --color-border-default: #E5E7EB;
+  --color-border-strong: #D1D5DB;
+
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #F9FAFB;
+  --color-surface-page: #F3F4F6;
+  --color-surface-hover: #F3F4F6;
+
+  --color-focus-ring: rgba(99,102,241,.35);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 999px;
+
+  --shadow-xs: 0 1px 2px rgba(16,24,40,.05);
+  --shadow-sm: 0 1px 3px rgba(16,24,40,.10);
+  --shadow-md: 0 4px 8px -2px rgba(16,24,40,.10);
+  --shadow-lg: 0 12px 24px -4px rgba(16,24,40,.15);
+
+  --font-display-lg: 32px/40px/700;
+  --font-title-lg: 20px/28px/600;
+  --font-title-md: 16px/24px/600;
+  --font-title-sm: 14px/20px/600;
+  --font-body-md: 14px/22px/400;
+  --font-body-sm: 13px/20px/400;
+  --font-body-xs: 12px/18px/400;
+  --font-metric-lg: 28px/36px/700;
+  --font-metric-md: 20px/28px/700;
+  --font-button: 14px/20px/500;
+  --font-caption: 12px/16px/400;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+}
+
+@layer base {
+  * {
+    @apply border-border-default;
+  }
+  body {
+    @apply bg-surface-page text-text-primary font-body antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-sm px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-700;
+  }
+  .btn-secondary {
+    @apply bg-white border border-border-default text-text-primary hover:bg-surface-hover;
+  }
+  .btn-danger {
+    @apply bg-danger-500 text-white hover:bg-danger-600;
+  }
+  .btn-ghost {
+    @apply hover:bg-surface-hover text-text-secondary;
+  }
+  .card {
+    @apply bg-surface border border-border-default rounded-md shadow-xs;
+  }
+  .input {
+    @apply flex h-9 w-full rounded-sm border border-border-default bg-white px-3 py-1 text-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

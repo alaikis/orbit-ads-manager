@@ -1,0 +1,27 @@
+# Orbit Caddy Configuration
+# Place this at /etc/caddy/Caddyfile or /root/Caddyfile
+
+# falcon.alaikis.com - 前端 + API 入口
+falcon.alaikis.com {
+	# API 反向代理
+	reverse_proxy /api/* localhost:8080
+
+	# 前端静态文件
+	root * /apphub/web
+	file_server
+
+	# 健康检查不缓存
+	@health path /health/*
+	reverse_proxy @health localhost:8080
+}
+
+# ads.alaikis.com - 广告相关子域（可扩展）
+ads.alaikis.com {
+	reverse_proxy /* localhost:8080
+}
+
+# 可选：默认配置（HTTP 重定向到 HTTPS）
+# 如果域名已配置 DNS 并指向服务器，Caddy 会自动处理 HTTPS 证书
+:80 {
+	redir https://{host}{uri} permanent
+}

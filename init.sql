@@ -1,0 +1,1 @@
+CREATE USER orbit WITH PASSWORD 'orbit'; CREATE DATABASE orbit OWNER orbit;

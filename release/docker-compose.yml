@@ -1,0 +1,89 @@
+﻿version: '3.8'
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: adm
+      POSTGRES_PASSWORD: adm2026@
+      POSTGRES_DB: adshub
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adm"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: orbit-api:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://adm:adm2026%40portal.gusty.top:5432/adshub
+      - REDIS_URL=redis://redis:6379/0
+      - APP_BASE_URL=https://orbit.elstella.com
+      - API_BASE_URL=https://api.orbit.elstella.com
+      - PORT=8080
+      - JWT_SECRET=$JWT_SECRET
+      - ENCRYPTION_MASTER_KEY=$ENCRYPTION_MASTER_KEY
+      - TZ=Asia/Shanghai
+      - LOG_LEVEL=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    image: orbit-worker:latest
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://adm:adm2026%40portal.gusty.top:5432/adshub
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=$JWT_SECRET
+      - ENCRYPTION_MASTER_KEY=$ENCRYPTION_MASTER_KEY
+      - TZ=Asia/Shanghai
+      - LOG_LEVEL=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  scheduler:
+    image: orbit-scheduler:latest
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://adm:adm2026%40portal.gusty.top:5432/adshub
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=$JWT_SECRET
+      - ENCRYPTION_MASTER_KEY=$ENCRYPTION_MASTER_KEY
+      - TZ=Asia/Shanghai
+      - LOG_LEVEL=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

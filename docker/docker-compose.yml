@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: orbit
+      POSTGRES_PASSWORD: orbit
+      POSTGRES_DB: orbit
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orbit"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://orbit:orbit@postgres:5432/orbit?sslmode=disable
+      - REDIS_URL=redis://redis:6379/0
+      - APP_BASE_URL=https://orbit.elstella.com
+      - API_BASE_URL=https://api.orbit.elstella.com
+      - PORT=8080
+      - JWT_SECRET=change-me-in-production-32-bytes-minimum
+      - ENCRYPTION_MASTER_KEY=change-me-in-production-32-bytes-minimum
+      - TZ=Asia/Shanghai
+      - LOG_LEVEL=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://orbit:orbit@postgres:5432/orbit?sslmode=disable
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=change-me-in-production-32-bytes-minimum
+      - ENCRYPTION_MASTER_KEY=change-me-in-production-32-bytes-minimum
+      - TZ=Asia/Shanghai
+      - LOG_LEVEL=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.scheduler
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://orbit:orbit@postgres:5432/orbit?sslmode=disable
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=change-me-in-production-32-bytes-minimum
+      - ENCRYPTION_MASTER_KEY=change-me-in-production-32-bytes-minimum
+      - TZ=Asia/Shanghai
+      - LOG_LEVEL=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
