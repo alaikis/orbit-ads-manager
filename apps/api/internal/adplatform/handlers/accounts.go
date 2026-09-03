@@ -13,7 +13,11 @@ import (
 func ListAdAccounts(c *gin.Context) {
 	tenantID, _ := c.Get("tenant_id")
 	var accounts []model.AdAccount
-	if err := database.DB.Where("tenant_id = ? AND deleted_at IS NULL", tenantID).Find(&accounts).Error; err != nil {
+	q := database.DB.Where("tenant_id = ? AND deleted_at IS NULL", tenantID)
+	if connID := c.Query("conn_id"); connID != "" {
+		q = q.Where("conn_id = ?", connID)
+	}
+	if err := q.Find(&accounts).Error; err != nil {
 		httputil.InternalError(c, "failed to list ad accounts")
 		return
 	}
@@ -28,6 +32,7 @@ func CreateAdAccount(c *gin.Context) {
 		ExternalID string `json:"external_id" binding:"required"`
 		Currency   string `json:"currency"`
 		CustomerID string `json:"customer_id"`
+		ConnID     *uint64 `json:"conn_id,omitempty"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		httputil.BadRequest(c, err.Error(), nil)
@@ -36,7 +41,7 @@ func CreateAdAccount(c *gin.Context) {
 
 	account := model.AdAccount{}
 	account.TenantID = tenantID.(uint64)
-	account.ConnID = 0
+	account.ConnID = req.ConnID
 	account.Platform = req.Platform
 	account.ExternalID = req.ExternalID
 	account.Name = req.Name

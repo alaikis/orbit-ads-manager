@@ -103,8 +103,8 @@ export default function ProvidersPage() {
     queryFn: () => workspaceService.list(),
   })
 
-  const providers: Provider[] = data?.data || []
-  const workspaces: Workspace[] = workspacesData?.data || []
+  const providers: Provider[] = (data as any)?.items || []
+  const workspaces: Workspace[] = (workspacesData as any)?.items || []
 
   const createMutation = useMutation({
     mutationFn: (payload: { type: string; name: string; workspace_id?: number; config: Record<string, unknown> }) =>
@@ -207,10 +207,24 @@ export default function ProvidersPage() {
 
   return (
     <div className="space-y-6">
+      <div className="card p-4 bg-primary-50 border-primary-200">
+        <div className="flex items-start gap-3">
+          <span className="text-xl">ℹ️</span>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-text-primary">已迁移到 /settings/connections</p>
+            <p className="text-xs text-text-muted mt-1">
+              统一凭据管理已上线，新增 LLM / SMTP / 平台接入请前往
+              <a href="/settings/connections" className="text-primary-600 hover:underline ml-1">/settings/connections</a>。
+              本页（仅 LLM/SMTP）将于 3 个月后下线（预计 2026-12-04）。
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-text-primary">Provider 配置</h1>
-          <p className="text-sm text-text-muted mt-1">管理 LLM、SMTP、广告平台等外部服务连接</p>
+          <h1 className="text-2xl font-semibold text-text-primary">Provider 配置（已弃用）</h1>
+          <p className="text-sm text-text-muted mt-1">仅显示历史 LLM / SMTP Provider。新接入请前往统一连接管理。</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => refetch()} className="btn btn-secondary"><RefreshCw size={16} /></button>

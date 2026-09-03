@@ -71,6 +71,7 @@ type PlatformConn struct {
 	LastSyncedAt  *time.Time             `json:"last_synced_at,omitempty"`
 	StoreID       *uint64                `json:"store_id,omitempty"`
 	Store         *StoreConfig           `gorm:"foreignKey:StoreID" json:"store,omitempty"`
+	ConnID        *uint64                `gorm:"index:idx_platform_conns_conn" json:"conn_id,omitempty"`
 }
 
 type OAuthToken struct {
@@ -140,7 +141,7 @@ type Order struct {
 
 type AdAccount struct {
 	BaseModel
-	ConnID      uint64 `gorm:"not null" json:"conn_id"`
+	ConnID      *uint64 `gorm:"index:idx_ad_accounts_conn" json:"conn_id,omitempty"`
 	Platform    string `gorm:"not null;size:20" json:"platform"`
 	ExternalID  string `gorm:"not null;size:255" json:"external_id"`
 	Name        string `gorm:"not null;size:255" json:"name"`

@@ -21,12 +21,17 @@ type StoreRequest struct {
 	BaseURL    string `json:"base_url" binding:"required,url"`
 	APIKey     string `json:"api_key" binding:"required"`
 	APISecret  string `json:"api_secret,omitempty"`
+	ConnID     *uint64 `json:"conn_id,omitempty"`
 }
 
 func ListStores(c *gin.Context) {
 	tenantID, _ := c.Get("tenant_id")
 	var stores []model.PlatformConn
-	if err := database.DB.Where("tenant_id = ? AND type = 'store' AND deleted_at IS NULL", tenantID).Find(&stores).Error; err != nil {
+	q := database.DB.Where("tenant_id = ? AND type = 'store' AND deleted_at IS NULL", tenantID)
+	if connID := c.Query("conn_id"); connID != "" {
+		q = q.Where("conn_id = ?", connID)
+	}
+	if err := q.Find(&stores).Error; err != nil {
 		httputil.InternalError(c, "failed to list stores")
 		return
 	}
@@ -48,6 +53,7 @@ func CreateStore(c *gin.Context) {
 		AdminUserID: tenantID.(uint64),
 		Status:    "bound",
 		Meta:      map[string]interface{}{"name": req.Name},
+		ConnID:    req.ConnID,
 	}
 	if err := database.DB.Create(&conn).Error; err != nil {
 		httputil.InternalError(c, "failed to create connection")

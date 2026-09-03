@@ -21,6 +21,8 @@ import (
 	intelHandlers "orbit/apps/api/internal/intelligence/handlers"
 	workspaceHandlers "orbit/apps/api/internal/workspace"
 	providerHandlers "orbit/apps/api/internal/provider"
+	connHandlers "orbit/apps/api/internal/connection"
+	connRefresh "orbit/apps/api/internal/connection"
 	"orbit/apps/api/internal/auth"
 	worker "orbit/apps/api/internal/sync"
 	"orbit/apps/api/pkg/database"
@@ -84,6 +86,7 @@ func startServer(cancel context.CancelFunc) {
 		intelHandlers.RegisterIntelligenceRoutes(api)
 		workspaceHandlers.RegisterWorkspaceRoutes(api)
 		providerHandlers.RegisterProviderRoutes(api)
+		connHandlers.RegisterConnectionRoutes(api)
 		httputil.RegisterHealthRoutes(api)
 	}
 
@@ -144,7 +147,16 @@ func startScheduler(ctx context.Context, done chan<- struct{}) {
 	c.AddFunc("0 */3 * * *", func() { fmt.Println("scheduled: ad_meta sync") })
 	c.AddFunc("*/30 * * * *", func() { fmt.Println("scheduled: product/order sync") })
 	c.AddFunc("0 */4 * * *", func() { fmt.Println("scheduled: feed regenerate") })
-	c.AddFunc("*/10 * * * *", func() { fmt.Println("scheduled: token refresh scan") })
+	c.AddFunc("*/10 * * * *", func() {
+		refreshed, failed, err := connRefresh.RefreshExpiringTokens(ctx, 10*time.Minute)
+		if err != nil {
+			log.Printf("token refresh scan error: %v", err)
+		} else if refreshed > 0 || failed > 0 {
+			log.Printf("token refresh: %d refreshed, %d failed", refreshed, failed)
+		} else {
+			fmt.Println("scheduled: token refresh scan (no expiring tokens)")
+		}
+	})
 	c.AddFunc("0 9 * * *", func() { fmt.Println("scheduled: daily rule evaluation") })
 	c.AddFunc("0 8 * * *", func() { fmt.Println("scheduled: daily ad metrics sync") })
 
