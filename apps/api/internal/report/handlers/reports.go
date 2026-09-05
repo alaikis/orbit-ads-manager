@@ -12,8 +12,15 @@ import (
 
 func ListReports(c *gin.Context) {
 	tenantID, _ := c.Get("tenant_id")
+	workspaceID := c.Query("workspace_id")
 	var schedules []model.ReportSchedule
-	if err := database.DB.Where("tenant_id = ? AND deleted_at IS NULL", tenantID).Order("created_at DESC").Find(&schedules).Error; err != nil {
+	query := database.DB.Where("tenant_id = ? AND deleted_at IS NULL", tenantID)
+	if workspaceID != "" {
+		query = query.Where("workspace_id = ?", workspaceID)
+	} else {
+		query = query.Where("workspace_id IS NULL")
+	}
+	if err := query.Order("created_at DESC").Find(&schedules).Error; err != nil {
 		httputil.InternalError(c, "failed to list reports")
 		return
 	}
@@ -26,8 +33,15 @@ func ExportReport(c *gin.Context) {
 
 func ListSchedules(c *gin.Context) {
 	tenantID, _ := c.Get("tenant_id")
+	workspaceID := c.Query("workspace_id")
 	var schedules []model.ReportSchedule
-	if err := database.DB.Where("tenant_id = ? AND deleted_at IS NULL", tenantID).Order("created_at DESC").Find(&schedules).Error; err != nil {
+	query := database.DB.Where("tenant_id = ? AND deleted_at IS NULL", tenantID)
+	if workspaceID != "" {
+		query = query.Where("workspace_id = ?", workspaceID)
+	} else {
+		query = query.Where("workspace_id IS NULL")
+	}
+	if err := query.Order("created_at DESC").Find(&schedules).Error; err != nil {
 		httputil.InternalError(c, "failed to list schedules")
 		return
 	}

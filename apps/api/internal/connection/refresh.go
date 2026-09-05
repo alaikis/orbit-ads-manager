@@ -64,16 +64,49 @@ func RefreshExpiringTokens(ctx context.Context, window time.Duration) (refreshed
 }
 
 func refreshOne(ctx context.Context, conn *Connection, tok *ConnectionToken) error {
-	switch conn.Platform {
-	case "google_ads", "google_shopping":
-		return refreshGoogleToken(ctx, conn, tok)
-	case "bing":
-		return refreshMicrosoftToken(ctx, conn, tok)
-	case "tiktok":
-		return refreshTikTokToken(ctx, conn, tok)
-	default:
+	client, ok := GetClient(conn.Platform)
+	if !ok {
 		return fmt.Errorf("platform %s does not support token refresh", conn.Platform)
 	}
+	return client.RefreshToken(ctx, conn, tok)
+}
+
+// refreshMetaToken exchanges a Meta long-lived access token for a fresh one.
+// Meta does NOT have a refresh_token grant; instead, re-exchanging the
+// long-lived token via grant_type=fb_exchange_token returns a new ~60d token.
+// See https://developers.facebook.com/docs/marketing-api/system-users/install-apps-and-generate-tokens
+func refreshMetaToken(ctx context.Context, conn *Connection, tok *ConnectionToken) error {
+	creds, err := LoadCredentials(ctx, conn.ID)
+	if err != nil {
+		return err
+	}
+	clientID := creds["client_id"]
+	clientSecret := creds["client_secret"]
+	if clientID == "" {
+		prov, provErr := LoadOAuthProvider(int64(conn.TenantID), "meta")
+		if provErr == nil && prov != nil {
+			clientID = prov.ClientID
+			clientSecret = prov.ClientSecret
+		}
+	}
+	if clientID == "" || clientSecret == "" {
+		return fmt.Errorf("meta connection missing client_id/client_secret")
+	}
+	at, err := crypto.Decrypt(tok.AccessTokenEnc, tok.AccessTokenNonce)
+	if err != nil {
+		return err
+	}
+	accessToken, expiresIn, err := ExchangeMetaForLongLivedToken(clientID, clientSecret, string(at))
+	if err != nil {
+		return err
+	}
+	rt, _ := crypto.Decrypt(tok.RefreshTokenEnc, tok.RefreshTokenNonce)
+	var rtStr string
+	if len(rt) > 0 {
+		rtStr = string(rt)
+	}
+	expiresAt := time.Now().Add(time.Duration(expiresIn) * time.Second)
+	return StoreToken(ctx, conn.ID, accessToken, rtStr, &expiresAt, "Bearer", tok.Scopes, tok.SystemUserID)
 }
 
 func refreshGoogleToken(ctx context.Context, conn *Connection, tok *ConnectionToken) error {
@@ -82,9 +115,16 @@ func refreshGoogleToken(ctx context.Context, conn *Connection, tok *ConnectionTo
 		return err
 	}
 	cfg := config.AppCfg.OAuth
+	prov, provErr := LoadOAuthProvider(int64(conn.TenantID), "google")
+	clientID := cfg.GoogleClientID
+	clientSecret := cfg.GoogleClientSecret
+	if provErr == nil && prov != nil && prov.ClientID != "" {
+		clientID = prov.ClientID
+		clientSecret = prov.ClientSecret
+	}
 	form := url.Values{}
-	form.Set("client_id", cfg.GoogleClientID)
-	form.Set("client_secret", cfg.GoogleClientSecret)
+	form.Set("client_id", clientID)
+	form.Set("client_secret", clientSecret)
 	form.Set("refresh_token", string(rt))
 	form.Set("grant_type", "refresh_token")
 	req, _ := http.NewRequest("POST", "https://oauth2.googleapis.com/token", strings.NewReader(form.Encode()))

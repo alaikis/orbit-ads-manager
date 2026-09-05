@@ -1,0 +1,11 @@
+ads.alaikis.com {
+    reverse_proxy /api/* localhost:8080
+    reverse_proxy /* localhost:3001
+    tls alex@laialex.com
+    
+    # Prevent browser caching of HTML/JS to avoid chunk hash mismatch
+    header /_next/static/chunks/* Cache-Control "public, max-age=31536000, immutable"
+    header /_next/static/css/* Cache-Control "public, max-age=31536000, immutable"
+    header /_next/static/media/* Cache-Control "public, max-age=31536000, immutable"
+    header /* Cache-Control "no-cache, no-store, must-revalidate"
+}

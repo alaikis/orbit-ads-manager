@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { campaignService, metricsService } from '@/lib/api'
+import { campaignService, metricsService, workspaceService } from '@/lib/api'
 import Link from 'next/link'
 import { useState } from 'react'
 import { MetricCard } from '@/components/dashboard/metric-card'
@@ -54,9 +54,16 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
     queryFn: () => campaignService.get(Number(params.id)),
   })
 
+  const { data: workspaceData } = useQuery({
+    queryKey: ['workspace', 'current'],
+    queryFn: () => workspaceService.getCurrent(),
+  })
+
+  const workspaceId = workspaceData?.id
+
   const { data: metricsData, isLoading: metricsLoading } = useQuery({
-    queryKey: ['campaign-metrics', params.id],
-    queryFn: () => metricsService.getSummary({ scope_type: 'campaign', scope_id: Number(params.id) }),
+    queryKey: ['campaign-metrics', params.id, workspaceId],
+    queryFn: () => metricsService.getSummary({ scope_type: 'campaign', scope_id: Number(params.id), workspace_id: workspaceId }),
   })
 
   const { data: adGroupsData, isLoading: adGroupsLoading } = useQuery({

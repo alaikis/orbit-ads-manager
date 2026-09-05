@@ -76,16 +76,35 @@ git show <target>:<file>
 
 阅读 `references/report-contract.md` + `bundle.json` + 项目规则（如有），仅审查目标相对基准的新增/修改内容。
 
-第一版使用 JVM/Java 规则集：
+按文件扩展名分发规则集（v1.1 起支持多语言）：
 
-| 轮次 | 规则文件 | 简称 | 审查目标 |
-|------|----------|------|----------|
-| 第一轮 | `references/arch-logic-rule.md` | `arch` | 架构、接口、数据库、业务逻辑、异常、事务、Spec 合规 |
-| 第二轮 | `references/security-rule.md` | `sec` | SQL 注入、XSS、越权、敏感数据、接口安全 |
-| 第三轮 | `references/performance-rule.md` | `perf` | 数据量、数据库、集合、并发、资源、IO |
-| 第四轮 | `references/maintainability-rule.md` | `maint` | 命名、可读性、注释、职责、兼容演进 |
-| 第五轮 | `references/test-rule.md` | `test` | 单测、异常场景、边界、自测证据 |
-| 第六轮 | `references/style-rule.md` | `style` | 常量、格式、OOP、日志、版权 |
+| 轮次 | 规则文件 | 简称 | 审查目标 | 适用 |
+|------|----------|------|----------|------|
+| 第一轮 | `references/arch-logic-rule.md` | `arch` | 架构、接口、数据库、业务逻辑、异常、事务、Spec 合规 | JVM/Java |
+| 第一轮-go | `references/go-rule.md` §1 | `arch-go` | ctx 传递、错误处理、goroutine 泄漏、接口设计 | Go |
+| 第一轮-node | `references/node-rule.md` §1 | `arch-node` | 客户端/服务端边界、Hooks 规则、Server Component | TS/Next |
+| 第二轮 | `references/security-rule.md` | `sec` | SQL 注入、XSS、越权、敏感数据、接口安全 | JVM/Java |
+| 第二轮-go | `references/go-rule.md` §2 | `sec-go` | SQL 注入、加密、越权、SSRF | Go |
+| 第二轮-node | `references/node-rule.md` §2 | `sec-node` | XSS、CSRF、敏感数据、认证 | TS/Next |
+| 第三轮 | `references/performance-rule.md` | `perf` | 数据量、数据库、集合、并发、资源、IO | JVM/Java |
+| 第三轮-go | `references/go-rule.md` §3 | `perf-go` | N+1、索引、内存、锁粒度 | Go |
+| 第三轮-node | `references/node-rule.md` §3 | `perf-node` | re-render、bundle、并发请求 | TS/Next |
+| 第四轮 | `references/maintainability-rule.md` | `maint` | 命名、可读性、注释、职责、兼容演进 | JVM/Java |
+| 第四轮-go | `references/go-rule.md` §4 | `maint-go` | 命名、函数长度、注释、错误消息 | Go |
+| 第四轮-node | `references/node-rule.md` §4 | `maint-node` | 命名、组件拆分、错误边界 | TS/Next |
+| 第五轮 | `references/test-rule.md` | `test` | 单测、异常场景、边界、自测证据 | JVM/Java |
+| 第五轮-go | `references/go-rule.md` §5 | `test-go` | 覆盖、隔离、表驱动 | Go |
+| 第五轮-node | `references/node-rule.md` §5 | `test-node` | hook 单元、RTL、E2E | TS/Next |
+| 第六轮 | `references/style-rule.md` | `style` | 常量、格式、OOP、日志、版权 | JVM/Java |
+| 第六轮-go | `references/go-rule.md` §6 | `style-go` | gofmt、显式导入、日志、常量 | Go |
+| 第六轮-node | `references/node-rule.md` §6 | `style-node` | ESLint、type vs interface、async | TS/Next |
+
+**启用规则集的方法**：
+- 检查 `bundle.json` 的 `file_extensions_seen`
+- 包含 `.java` → 启用 JVM 规则
+- 包含 `.go` → 启用 Go 规则
+- 包含 `.ts`/`.tsx`/`.js`/`.jsx` → 启用 Node 规则
+- 多种并存时**并行**启用（每种语言独立审查，合并 issues）
 
 严重级别映射固定：
 

@@ -14,10 +14,16 @@ func GetMetricsSummary(c *gin.Context) {
 	tenantID, _ := c.Get("tenant_id")
 	scopeType := c.DefaultQuery("scope_type", "tenant")
 	scopeID := c.Query("scope_id")
+	workspaceID := c.Query("workspace_id")
 	_ = c.DefaultQuery("date_range", "7d")
 
 	var stats []model.DailyStat
 	query := database.DB.Where("tenant_id = ? AND deleted_at IS NULL", tenantID)
+	if workspaceID != "" {
+		query = query.Where("workspace_id = ?", workspaceID)
+	} else {
+		query = query.Where("workspace_id IS NULL")
+	}
 	if scopeID != "" {
 		query = query.Where("scope_type = ? AND scope_id = ?", scopeType, scopeID)
 	}
@@ -36,10 +42,18 @@ func GetTimeseries(c *gin.Context) {
 	tenantID, _ := c.Get("tenant_id")
 	scopeType := c.DefaultQuery("scope", "tenant")
 	step := c.DefaultQuery("step", "day")
+	workspaceID := c.Query("workspace_id")
 
 	var stats []model.DailyStat
-	if err := database.DB.Where("tenant_id = ? AND scope_type = ? AND deleted_at IS NULL", tenantID, scopeType).
-		Order("date ASC").Limit(90).Find(&stats).Error; err != nil {
+	query := database.DB.Where("tenant_id = ? AND scope_type = ? AND deleted_at IS NULL", tenantID, scopeType)
+	if workspaceID != "" {
+		query = query.Where("workspace_id = ?", workspaceID)
+	} else {
+		query = query.Where("workspace_id IS NULL")
+	}
+	query = query.Order("date ASC").Limit(90)
+
+	if err := query.Find(&stats).Error; err != nil {
 		httputil.InternalError(c, "failed to fetch timeseries")
 		return
 	}

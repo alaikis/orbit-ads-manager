@@ -2,7 +2,7 @@ import { apiClient } from '../client'
 import type { Report, PaginatedResponse } from '../types'
 
 export class ReportService {
-  async list(params?: { page?: number; per_page?: number; type?: string }): Promise<PaginatedResponse<Report>> {
+  async list(params?: { page?: number; per_page?: number; type?: string; workspace_id?: number }): Promise<PaginatedResponse<Report>> {
     const query = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : ''
     return apiClient.get<PaginatedResponse<Report>>(`/reports${query}`)
   }
@@ -11,7 +11,7 @@ export class ReportService {
     return apiClient.get<Report>(`/reports/${id}`)
   }
 
-  async create(data: { name: string; type: string; filters?: Record<string, unknown> }): Promise<Report> {
+  async create(data: { name: string; type: string; filters?: Record<string, unknown>; workspace_id?: number }): Promise<Report> {
     return apiClient.post<Report>('/reports', data)
   }
 

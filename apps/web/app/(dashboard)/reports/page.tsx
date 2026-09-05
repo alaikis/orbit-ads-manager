@@ -1,16 +1,23 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { api, reportService } from '@/lib/api'
+import { apiClient, reportService, workspaceService } from '@/lib/api'
 import { MetricCard } from '@/components/dashboard/metric-card'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 type ReportPoint = { date: string; spend: number; clicks: number; impressions: number }
 
 export default function ReportsPage() {
+  const { data: workspaceData } = useQuery({
+    queryKey: ['workspace', 'current'],
+    queryFn: () => workspaceService.getCurrent(),
+  })
+
+  const workspaceId = workspaceData?.id
+
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['reports'],
-    queryFn: () => api.get('/reports/summary'),
+    queryKey: ['reports', workspaceId],
+    queryFn: () => apiClient.get<any>('/reports/summary', workspaceId ? { workspace_id: String(workspaceId) } : undefined),
   })
 
   const summary = data || {}

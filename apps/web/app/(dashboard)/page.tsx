@@ -1,15 +1,22 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { metricsService } from '@/lib/api'
+import { metricsService, workspaceService } from '@/lib/api'
 import { MetricCard } from '@/components/dashboard/metric-card'
 import { QuickActions } from '@/components/dashboard/quick-actions'
 import { RefreshCw } from 'lucide-react'
 
 export default function DashboardPage() {
+  const { data: workspaceData } = useQuery({
+    queryKey: ['workspace', 'current'],
+    queryFn: () => workspaceService.getCurrent(),
+  })
+
+  const workspaceId = workspaceData?.id
+
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => metricsService.getSummary(),
+    queryKey: ['dashboard', workspaceId],
+    queryFn: () => metricsService.getSummary(workspaceId ? { workspace_id: workspaceId } : undefined),
   })
 
   const metrics = data || {}

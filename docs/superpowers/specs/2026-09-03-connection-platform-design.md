@@ -2,6 +2,9 @@
 impetus_change: orbit-platform
 role: technical-design
 canonical_spec: openspec
+archived_with: openspec/changes/archive/2026-09-03-orbit-platform
+status: archived
+archived_at: 2026-09-04
 ---
 
 # Design Doc: 统一凭据管理与按平台授权体系

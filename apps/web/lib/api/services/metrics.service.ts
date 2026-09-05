@@ -2,7 +2,7 @@ import { apiClient } from '../client'
 import type { MetricsSummary } from '../types'
 
 export class MetricsService {
-  async getSummary(params?: { scope_type?: string; scope_id?: number }): Promise<MetricsSummary> {
+  async getSummary(params?: { scope_type?: string; scope_id?: number; workspace_id?: number }): Promise<MetricsSummary> {
     const query = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : ''
     return apiClient.get<MetricsSummary>(`/metrics/summary${query}`)
   }
@@ -10,6 +10,7 @@ export class MetricsService {
   async getTrend(params: { 
     scope_type?: string
     scope_id?: number
+    workspace_id?: number
     start_date: string
     end_date: string 
   }): Promise<{ date: string; spend: number; clicks: number }[]> {

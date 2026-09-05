@@ -1,0 +1,11 @@
+{
+  "change": "oauth-platform-config",
+  "base_ref": "9391e1b",
+  "target_ref": "HEAD",
+  "profile": "standard",
+  "generated_at": "2026-09-04T04:27:42Z",
+  "file_extensions_seen": [".go", ".sql", ".example", ".md", ".yaml"],
+  "java_files": 0,
+  "non_jvm_files": 6,
+  "sql_files": 1
+}

@@ -1,0 +1,14 @@
+{
+  "change": "orbit-platform",
+  "phase": "design",
+  "mode": "beta",
+  "context_compression": "beta",
+  "canonical_spec": "openspec",
+  "generated_by": "impetus-handoff.sh",
+  "context_hash": "f18b035a1ecd6aa1a5766ba36b227fe41630f8eb0653e59702492aa303f98bd2",
+  "files": [
+    { "path": "openspec/changes/orbit-platform/proposal.md", "role": "proposal", "sha256": "a51042e7c63851e05bd3b2e55ebded5696b4d1468325ee20e80a095d8af0fb3c", "lines": 94 },
+    { "path": "openspec/changes/orbit-platform/design.md", "role": "open-design-notes", "sha256": "69eb4f0b09db05bdd16b2f0f78fede210c3e2b65e5d3ad5ce73009d1d0de0406", "lines": 161 },
+    { "path": "openspec/changes/orbit-platform/tasks.md", "role": "tasks", "sha256": "ad84131647eb198586a896717d645de7f8c8abc47375b7391a0870eb8c030140", "lines": 119 }
+  ]
+}

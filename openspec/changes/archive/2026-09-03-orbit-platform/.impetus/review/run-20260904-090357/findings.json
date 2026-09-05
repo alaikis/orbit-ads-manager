@@ -1,0 +1,61 @@
+{
+  "gate": "PASS",
+  "profile": "standard",
+  "summary": "未发现阻断问题。本 change 涉及 Go + TypeScript 代码，impetus-review 第一版规则集仅覆盖 JVM/Java (*.java/*.xml/*.yml/*.yaml/*.properties/*.sql)。SQL 文件已纳入审查范围（migration 000003），Go/TS 源文件超出本规则集覆盖范围。按 skill 约定：未发现 JVM/Java 相关变更时，生成空审查报告，结果为 PASS。",
+  "rule_set_version": "v1.0-jvm",
+  "rules_applied": [],
+  "rules_skipped": [
+    {
+      "rule": "arch-logic",
+      "reason": "no java files in diff"
+    },
+    {
+      "rule": "security",
+      "reason": "no java files in diff; SQL migration reviewed manually"
+    },
+    {
+      "rule": "performance",
+      "reason": "no java files in diff"
+    },
+    {
+      "rule": "maintainability",
+      "reason": "no java files in diff"
+    },
+    {
+      "rule": "test",
+      "reason": "no java files in diff; project has no unit tests in apps/api/*_test.go (accepted per plan)"
+    },
+    {
+      "rule": "style",
+      "reason": "no java files in diff"
+    }
+  ],
+  "files_in_diff": 22,
+  "java_files": 0,
+  "non_jvm_files": 19,
+  "sql_files": 1,
+  "md_files": 4,
+  "issues": [],
+  "manual_checks": [
+    {
+      "name": "light-verify 5 项",
+      "result": "PASS",
+      "details": "tasks.md 54 [x]/0 [/]/14 [-]; git diff 22 files +2851/-82; go build OK; npm run build OK; 无 _test.go; 无硬编码密钥; 无 unsafe; 无 SQL 注入拼接"
+    },
+    {
+      "name": "SQL migration 000003 人工审查",
+      "result": "PASS",
+      "details": "4 张表 (connections/credentials/oauth_states + platform_conns.ad_accounts 加 conn_id); 全部 IF NOT EXISTS / 索引 / ON DELETE CASCADE; 无 raw 拼接; 全部用 ? 占位"
+    },
+    {
+      "name": "Go 增量",
+      "result": "PASS",
+      "details": "9 平台 schema 全部 register; OAuth/PKCE state +5min TTL; AES-256-GCM nonce 12B; refresh worker cron */10; 失败 3 次写 error"
+    },
+    {
+      "name": "TS 增量",
+      "result": "PASS",
+      "details": "Stepper 3 步 (选择/授权/完成); OAuth 跳转 window.location.href; connection.service 9 平台 client"
+    }
+  ]
+}

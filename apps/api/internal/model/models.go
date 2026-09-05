@@ -192,12 +192,13 @@ type Ad struct {
 
 type DailyStat struct {
 	BaseModel
-	ScopeType string `gorm:"size:20;not null" json:"scope_type"`
-	ScopeID   uint64 `gorm:"not null" json:"scope_id"`
-	Date      string `gorm:"not null;size:20;index:idx_date" json:"date"`
-	Platform  string `gorm:"not null;size:20" json:"platform"`
-	Metrics   map[string]interface{} `gorm:"type:jsonb;serializer:json" json:"metrics,omitempty"`
-	Source    string `gorm:"size:20;not null;default:'synced'" json:"source"`
+	WorkspaceID *uint64 `gorm:"index:idx_workspace_date" json:"workspace_id,omitempty"`
+	ScopeType   string  `gorm:"size:20;not null" json:"scope_type"`
+	ScopeID     uint64  `gorm:"not null" json:"scope_id"`
+	Date        string  `gorm:"not null;size:20;index:idx_date" json:"date"`
+	Platform    string  `gorm:"not null;size:20" json:"platform"`
+	Metrics     map[string]interface{} `gorm:"type:jsonb;serializer:json" json:"metrics,omitempty"`
+	Source      string  `gorm:"size:20;not null;default:'synced'" json:"source"`
 }
 
 type SyncJob struct {
@@ -333,15 +334,16 @@ type EmailLog struct {
 
 type ReportSchedule struct {
 	BaseModel
-	TenantID    uint64                 `gorm:"not null;index" json:"tenant_id"`
-	Name        string                 `gorm:"not null;size:255" json:"name"`
-	Type        string                 `gorm:"not null;size:20" json:"type"`
-	ScopeSpec   map[string]interface{} `gorm:"type:jsonb;serializer:json" json:"scope_spec,omitempty"`
-	Recipients  []string               `gorm:"type:jsonb;serializer:json" json:"recipients,omitempty"`
-	Template    map[string]interface{} `gorm:"type:jsonb;serializer:json" json:"template,omitempty"`
-	CronConfig  string                 `gorm:"size:100" json:"cron_config,omitempty"`
-	Enabled     bool                   `gorm:"not null;default:true" json:"enabled"`
-	LastSentAt  *time.Time             `json:"last_sent_at,omitempty"`
+	TenantID     uint64                 `gorm:"not null;index" json:"tenant_id"`
+	WorkspaceID  *uint64                `gorm:"index" json:"workspace_id,omitempty"`
+	Name         string                 `gorm:"not null;size:255" json:"name"`
+	Type         string                 `gorm:"not null;size:20" json:"type"`
+	ScopeSpec    map[string]interface{} `gorm:"type:jsonb;serializer:json" json:"scope_spec,omitempty"`
+	Recipients   []string               `gorm:"type:jsonb;serializer:json" json:"recipients,omitempty"`
+	Template     map[string]interface{} `gorm:"type:jsonb;serializer:json" json:"template,omitempty"`
+	CronConfig   string                 `gorm:"size:100" json:"cron_config,omitempty"`
+	Enabled      bool                   `gorm:"not null;default:true" json:"enabled"`
+	LastSentAt   *time.Time             `json:"last_sent_at,omitempty"`
 }
 
 type WebhookDelivery struct {

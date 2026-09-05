@@ -132,19 +132,11 @@ func Test(ctx context.Context, tenantID, id uint64) (map[string]interface{}, err
 	if err != nil {
 		return nil, err
 	}
-	switch conn.Platform {
-	case "woocommerce":
-		host, _ := creds["base_url"]
-		ck, _ := creds["consumer_key"]
-		cs, _ := creds["consumer_secret"]
-		return woocommerceTest(host, ck, cs)
-	case "shopify":
-		domain, _ := creds["shop_domain"]
-		tok, _ := creds["access_token"]
-		return shopifyTest(domain, tok)
-	default:
+	client, ok := GetClient(conn.Platform)
+	if !ok {
 		return map[string]interface{}{"ok": true, "message": "platform validation not implemented in v1"}, nil
 	}
+	return client.Test(ctx, conn, creds)
 }
 
 func Sync(ctx context.Context, tenantID, id uint64) (map[string]interface{}, error) {
@@ -154,22 +146,16 @@ func Sync(ctx context.Context, tenantID, id uint64) (map[string]interface{}, err
 	}
 	creds := loadCredentialsOrEmpty(ctx, conn.ID)
 	tok := loadTokenOrEmpty(ctx, conn.ID)
-	switch conn.Platform {
-	case "woocommerce":
-		return syncWooCommerce(ctx, conn, creds)
-	case "google_shopping":
-		return syncGoogleShopping(ctx, conn, tok)
-	case "meta":
-		return listMetaAdAccounts(ctx, conn, tok)
-	case "bing":
-		return listBingAdAccounts(ctx, conn, creds)
-	case "tiktok":
-		return listTikTokAdAccounts(ctx, conn, creds)
-	case "google_ads":
-		return map[string]interface{}{"ok": true, "message": "google_ads PostAuth pending OAuth authorization"}, nil
-	default:
+	client, ok := GetClient(conn.Platform)
+	if !ok {
 		return map[string]interface{}{"ok": true, "message": "no sync action for " + conn.Platform, "items": []interface{}{}}, nil
 	}
+	schema, _ := GetSchema(conn.Platform)
+	action := ""
+	if len(schema.PostAuthActions) > 0 {
+		action = schema.PostAuthActions[0]
+	}
+	return client.Sync(ctx, conn, tok, creds, action)
 }
 
 func ListPlatforms() []PlatformSchema {

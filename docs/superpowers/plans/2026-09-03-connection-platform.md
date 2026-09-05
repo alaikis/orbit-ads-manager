@@ -5,6 +5,8 @@ base-ref: bd97d0b7fee259a197fa5e55c15cde6401bc1eae
 issue-id: null
 issue-type: story
 workflow: full
+archived-with: openspec/changes/archive/2026-09-03-orbit-platform
+archived-at: 2026-09-04
 ---
 
 # Plan: 统一凭据管理与按平台授权体系

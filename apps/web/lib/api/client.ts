@@ -119,7 +119,13 @@ async function request<T>(path: string, options: RequestInit = {}, retry = true)
 }
 
 export const apiClient = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string, query?: Record<string, unknown>) => {
+    const qs = query ? '?' + new URLSearchParams(Object.entries(query).reduce<Record<string, string>>((acc, [key, value]) => {
+      if (value !== undefined && value !== null) acc[key] = String(value)
+      return acc
+    }, {})).toString() : ''
+    return request<T>(`${path}${qs}`)
+  },
   post: <T>(path: string, data?: unknown) => request<T>(path, {
     method: 'POST',
     body: data ? JSON.stringify(data) : undefined,

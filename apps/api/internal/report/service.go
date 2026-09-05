@@ -14,9 +14,14 @@ func NewReportService() *ReportService {
 	return &ReportService{}
 }
 
-func (s *ReportService) GetSummary(ctx context.Context, tenantID uint64, scopeType string, scopeID *uint64, dateRange string) (map[string]interface{}, error) {
+func (s *ReportService) GetSummary(ctx context.Context, tenantID uint64, scopeType string, scopeID *uint64, dateRange string, workspaceID *uint64) (map[string]interface{}, error) {
 	var stats []model.DailyStat
 	query := database.DB.Where("tenant_id = ? AND deleted_at IS NULL", tenantID)
+	if workspaceID != nil {
+		query = query.Where("workspace_id = ?", *workspaceID)
+	} else {
+		query = query.Where("workspace_id IS NULL")
+	}
 	if scopeID != nil {
 		query = query.Where("scope_type = ? AND scope_id = ?", scopeType, *scopeID)
 	}
@@ -65,9 +70,14 @@ func (s *ReportService) GetSummary(ctx context.Context, tenantID uint64, scopeTy
 	}, nil
 }
 
-func (s *ReportService) ExportCSV(ctx context.Context, tenantID uint64, scopeType string, scopeID *uint64) (string, error) {
+func (s *ReportService) ExportCSV(ctx context.Context, tenantID uint64, scopeType string, scopeID *uint64, workspaceID *uint64) (string, error) {
 	var stats []model.DailyStat
 	query := database.DB.Where("tenant_id = ? AND deleted_at IS NULL", tenantID)
+	if workspaceID != nil {
+		query = query.Where("workspace_id = ?", *workspaceID)
+	} else {
+		query = query.Where("workspace_id IS NULL")
+	}
 	if scopeID != nil {
 		query = query.Where("scope_type = ? AND scope_id = ?", scopeType, *scopeID)
 	}
@@ -87,9 +97,15 @@ func (s *ReportService) ExportCSV(ctx context.Context, tenantID uint64, scopeTyp
 	return sb.String(), nil
 }
 
-func (s *ReportService) GetTimeseries(ctx context.Context, tenantID uint64, scopeType string, step string) ([]map[string]interface{}, error) {
+func (s *ReportService) GetTimeseries(ctx context.Context, tenantID uint64, scopeType string, step string, workspaceID *uint64) ([]map[string]interface{}, error) {
 	var stats []model.DailyStat
-	if err := database.DB.Where("tenant_id = ? AND scope_type = ? AND deleted_at IS NULL", tenantID, scopeType).Order("date ASC").Limit(90).Find(&stats).Error; err != nil {
+	query := database.DB.Where("tenant_id = ? AND scope_type = ? AND deleted_at IS NULL", tenantID, scopeType)
+	if workspaceID != nil {
+		query = query.Where("workspace_id = ?", *workspaceID)
+	} else {
+		query = query.Where("workspace_id IS NULL")
+	}
+	if err := query.Order("date ASC").Limit(90).Find(&stats).Error; err != nil {
 		return nil, err
 	}
 

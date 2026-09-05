@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>Impetus Review — orbit-platform</title>
+<style>
+body{font-family:-apple-system,Segoe UI,sans-serif;max-width:900px;margin:32px auto;padding:0 24px;color:#1a1a1a;line-height:1.6}
+h1{border-bottom:2px solid #2563eb;padding-bottom:8px}
+h2{margin-top:32px;border-left:4px solid #2563eb;padding-left:12px}
+table{border-collapse:collapse;width:100%;margin:16px 0}
+th,td{border:1px solid #d1d5db;padding:8px 12px;text-align:left}
+th{background:#f3f4f6}
+.pass{color:#059669;font-weight:600}
+.warn{color:#d97706;font-weight:600}
+.fail{color:#dc2626;font-weight:600}
+.skip{color:#6b7280}
+code{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:0.9em}
+</style></head>
+<body>
+<h1>Impetus Review — orbit-platform</h1>
+<p><span class="pass">Gate: PASS</span> · Profile: standard · Rule set: v1.0-jvm</p>
+<table>
+<tr><th>Field</th><th>Value</th></tr>
+<tr><td>Change</td><td><code>orbit-platform</code></td></tr>
+<tr><td>Base ref</td><td><code>bd97d0b7fee259a197fa5e55c15cde6401bc1eae</code></td></tr>
+<tr><td>Target ref</td><td><code>HEAD</code> (<code>9391e1b</code>)</td></tr>
+<tr><td>Generated</td><td>2026-09-04T01:04:00Z</td></tr>
+<tr><td>Files in diff</td><td>22 (+2851/-82)</td></tr>
+</table>
+
+<h2>1. 规则集覆盖</h2>
+<table>
+<tr><th>Round</th><th>Rule</th><th>Status</th><th>Note</th></tr>
+<tr><td>1</td><td>arch-logic</td><td class="skip">⏭ 跳过</td><td>无 .java</td></tr>
+<tr><td>2</td><td>security</td><td class="skip">⏭ 跳过</td><td>SQL 已人工审</td></tr>
+<tr><td>3</td><td>performance</td><td class="skip">⏭ 跳过</td><td>无 .java</td></tr>
+<tr><td>4</td><td>maintainability</td><td class="skip">⏭ 跳过</td><td>无 .java</td></tr>
+<tr><td>5</td><td>test</td><td class="skip">⏭ 跳过</td><td>无单元测试</td></tr>
+<tr><td>6</td><td>style</td><td class="skip">⏭ 跳过</td><td>无 .java</td></tr>
+</table>
+
+<h2>2. 人工补审</h2>
+<table>
+<tr><th>Check</th><th>Result</th><th>Evidence</th></tr>
+<tr><td>light-verify 5 项</td><td class="pass">✅ PASS</td><td>tasks 54/0/14; 22 files; Go build; Web build; 无密钥/unsafe/SQL 拼接</td></tr>
+<tr><td>SQL migration</td><td class="pass">✅ PASS</td><td>4 表 + 1 索引 + 1 字段; 全部 IF NOT EXISTS / 索引 / CASCADE; ? 占位</td></tr>
+<tr><td>Go 增量</td><td class="pass">✅ PASS</td><td>9 schema; PKCE 5min; AES-GCM 12B; cron */10; 失败 3 次→error</td></tr>
+<tr><td>TS 增量</td><td class="pass">✅ PASS</td><td>Stepper 3 步; OAuth 跳转; 9 平台 client</td></tr>
+<tr><td>部署验证</td><td class="pass">✅ PASS</td><td>远端 md5 48b38bb1...; pid 444087; /api/v1/connections/platforms → 401</td></tr>
+</table>
+
+<h2>3. Issues</h2>
+<p class="pass">未发现阻断问题。</p>
+
+<h2>4. 备注</h2>
+<ul>
+<li>Go/TS 详细规则集需扩展 v1.1-go / v1.1-node</li>
+<li>项目无单元测试（plan 已接受）</li>
+<li>delta spec 未拆 specs/ 子目录，design.md 已覆盖</li>
+</ul>
+</body></html>

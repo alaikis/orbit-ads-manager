@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -269,7 +270,13 @@ func OAuthStartHandler(c *gin.Context) {
 		httputil.BadRequest(c, "platform does not use OAuth flow", nil)
 		return
 	}
-	clientID := envOrConfig(schema.ClientIDEnv)
+	prov, provErr := LoadOAuthProvider(int64(tenantID), schema.OAuthProvider)
+	clientID := ""
+	if provErr == nil && prov != nil {
+		clientID = prov.ClientID
+	} else {
+		clientID = envOrConfig(schema.ClientIDEnv)
+	}
 	if clientID == "" {
 		httputil.BadRequest(c, "OAuth client not configured (set "+schema.ClientIDEnv+")", nil)
 		return
@@ -329,8 +336,16 @@ func OAuthCallbackHandler(c *gin.Context) {
 		return
 	}
 	schema, _ := GetSchema(os.Platform)
-	clientID := envOrConfig(schema.ClientIDEnv)
-	clientSecret := envOrConfig(schema.ClientIDEnv + "_SECRET")
+	prov, provErr := LoadOAuthProvider(int64(os.TenantID), schema.OAuthProvider)
+	clientID := ""
+	clientSecret := ""
+	if provErr == nil && prov != nil {
+		clientID = prov.ClientID
+		clientSecret = prov.ClientSecret
+	} else {
+		clientID = envOrConfig(schema.ClientIDEnv)
+		clientSecret = envOrConfig(schema.ClientIDEnv + "_SECRET")
+	}
 	redirectBase := config.AppCfg.App.BaseURL
 	if redirectBase == "" {
 		redirectBase = fmt.Sprintf("%s://%s", scheme(c), c.Request.Host)
@@ -354,10 +369,26 @@ func OAuthCallbackHandler(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/settings/connections?error=conn_create_failed&detail="+err.Error())
 		return
 	}
+
+	// Meta: exchange short-lived token (1-2h) for long-lived (~60d) before storing.
+	// Per https://developers.facebook.com/docs/facebook-login/guides/access-tokens/get-long-lived
 	var expiresAt *time.Time
 	if expiresIn > 0 {
 		t := time.Now().Add(time.Duration(expiresIn) * time.Second)
 		expiresAt = &t
+	}
+	if os.Platform == "meta" && accessToken != "" && clientID != "" && clientSecret != "" {
+		longLived, longExpiresIn, llErr := ExchangeMetaForLongLivedToken(clientID, clientSecret, accessToken)
+		if llErr != nil {
+			c.Redirect(http.StatusFound, fmt.Sprintf("/settings/connections?connected=%d&warning=meta_long_lived_failed&detail=%s", conn.ID, url.QueryEscape(llErr.Error())))
+			markOAuthStateUsed(state)
+			return
+		}
+		accessToken = longLived
+		if expiresAt == nil || longExpiresIn > int(time.Until(*expiresAt).Seconds()) {
+			t := time.Now().Add(time.Duration(longExpiresIn) * time.Second)
+			expiresAt = &t
+		}
 	}
 	if err := StoreToken(c.Request.Context(), conn.ID, accessToken, refreshToken, expiresAt, "Bearer", os.Scopes, ""); err != nil {
 		c.Redirect(http.StatusFound, "/settings/connections?error=token_store_failed&detail="+err.Error())
@@ -443,5 +474,129 @@ func RegisterConnectionRoutes(r *gin.RouterGroup) {
 		conns.GET("/oauth/callback", OAuthCallbackHandler)
 		conns.GET("/:id/google-shopping/merchants", GoogleShoppingMerchantsHandler)
 		conns.GET("/:id/google-shopping/products", GoogleShoppingProductsHandler)
+		conns.POST("/routes/execute", ExecuteRouteHandler)
+	}
+}
+
+// ExecuteRouteRequest 路线执行请求
+type ExecuteRouteRequest struct {
+	SourceConnID uint64   `json:"source_conn_id" binding:"required"`
+	TargetConnID uint64   `json:"target_conn_id" binding:"required"`
+	Action       string   `json:"action" binding:"required"`
+	Params       map[string]string `json:"params"`
+}
+
+// ExecuteRouteHandler 执行跨连接路线（如 Woo → Meta 产品同步）
+// POST /api/v1/connections/routes/execute
+// Body: {source_conn_id, target_conn_id, action, params}
+func ExecuteRouteHandler(c *gin.Context) {
+	tenantID, ok := tenantIDFromContext(c)
+	if !ok {
+		return
+	}
+	var req ExecuteRouteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httputil.BadRequest(c, "invalid body: "+err.Error(), nil)
+		return
+	}
+	sourceConn, err := Get(c.Request.Context(), tenantID, req.SourceConnID)
+	if err != nil {
+		httputil.NotFound(c, "source connection not found")
+		return
+	}
+	targetConn, err := Get(c.Request.Context(), tenantID, req.TargetConnID)
+	if err != nil {
+		httputil.NotFound(c, "target connection not found")
+		return
+	}
+	sourceClient, ok := GetClient(sourceConn.Platform)
+	if !ok {
+		httputil.BadRequest(c, "source platform not supported: "+sourceConn.Platform, nil)
+		return
+	}
+	targetClient, ok := GetClient(targetConn.Platform)
+	if !ok {
+		httputil.BadRequest(c, "target platform not supported: "+targetConn.Platform, nil)
+		return
+	}
+	switch req.Action {
+	case "sync_products":
+		sourceCreds, err := loadCredentials(c.Request.Context(), sourceConn.ID)
+		if err != nil {
+			httputil.InternalError(c, "failed to load source credentials: "+err.Error())
+			return
+		}
+		targetTok := loadTokenOrEmpty(c.Request.Context(), targetConn.ID)
+		targetCreds, _ := loadCredentials(c.Request.Context(), targetConn.ID)
+		products, ok := req.Params["products"]
+		if !ok {
+			syncRes, err := sourceClient.Sync(c.Request.Context(), sourceConn, nil, sourceCreds, "list_products")
+			if err != nil {
+				httputil.InternalError(c, "failed to list source products: "+err.Error())
+				return
+			}
+			products, _ = syncRes["products"].(string)
+		}
+		var prods []map[string]string
+		_ = json.Unmarshal([]byte(products), &prods)
+		if len(prods) == 0 {
+			httputil.BadRequest(c, "no products to sync", nil)
+			return
+		}
+		targetCreds["products_json"] = products
+		if v, ok := req.Params["catalog_id"]; ok {
+			targetCreds["catalog_id"] = v
+		}
+		if v, ok := req.Params["merchant_id"]; ok {
+			targetCreds["merchant_id"] = v
+		}
+		if v, ok := req.Params["target_id"]; ok {
+			targetCreds["target_id"] = v
+		}
+		result, err := targetClient.Sync(c.Request.Context(), targetConn, targetTok, targetCreds, "upload_products")
+		if err != nil {
+			httputil.InternalError(c, "failed to upload products: "+err.Error())
+			return
+		}
+		httputil.Success(c, map[string]interface{}{
+			"route":    fmt.Sprintf("%s → %s", sourceConn.Platform, targetConn.Platform),
+			"action":   req.Action,
+			"products": len(prods),
+			"result":   result,
+		})
+	case "create_shopping_campaign":
+		targetTok := loadTokenOrEmpty(c.Request.Context(), targetConn.ID)
+		targetCreds, _ := loadCredentials(c.Request.Context(), targetConn.ID)
+		if targetConn.Platform != "google_ads" {
+			httputil.BadRequest(c, "create_shopping_campaign requires google_ads target", nil)
+			return
+		}
+		if v, ok := req.Params["customer_id"]; ok {
+			targetCreds["customer_id"] = v
+		}
+		if v, ok := req.Params["campaign_name"]; ok {
+			targetCreds["campaign_name"] = v
+		}
+		if v, ok := req.Params["daily_budget_micros"]; ok {
+			targetCreds["daily_budget_micros"] = v
+		}
+		if v, ok := req.Params["feed_label"]; ok {
+			targetCreds["feed_label"] = v
+		}
+		if v, ok := req.Params["merchant_id"]; ok {
+			targetCreds["merchant_id"] = v
+		}
+		result, err := targetClient.Sync(c.Request.Context(), targetConn, targetTok, targetCreds, "create_shopping_campaign")
+		if err != nil {
+			httputil.InternalError(c, "failed to create shopping campaign: "+err.Error())
+			return
+		}
+		httputil.Success(c, map[string]interface{}{
+			"route":    fmt.Sprintf("%s → %s", sourceConn.Platform, targetConn.Platform),
+			"action":   req.Action,
+			"result":   result,
+		})
+	default:
+		httputil.BadRequest(c, "unsupported route action: "+req.Action, nil)
 	}
 }
