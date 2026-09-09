@@ -1,21 +1,3 @@
-falcon.alaikis.com {
-    reverse_proxy /api/* localhost:8080
-    root * /apphub/web
-    file_server
-}
-
-ads.alaikis.com {
-    # Frontend migrated to Vercel — keep as fallback during DNS cutover
-    reverse_proxy /api/* localhost:8080
-    reverse_proxy /* localhost:3001
-    tls alex@laialex.com
-
-    header /_next/static/chunks/* Cache-Control "public, max-age=31536000, immutable"
-    header /_next/static/css/* Cache-Control "public, max-age=31536000, immutable"
-    header /_next/static/media/* Cache-Control "public, max-age=31536000, immutable"
-    header /* Cache-Control "no-cache, no-store, must-revalidate"
-}
-
 adsapi.alaikis.com {
     reverse_proxy /api/* localhost:8080
     tls alex@laialex.com
