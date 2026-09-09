@@ -34,8 +34,9 @@ services:
     environment:
       - DATABASE_URL=postgres://adm:adm2026%40portal.gusty.top:5432/adshub
       - REDIS_URL=redis://redis:6379/0
-      - APP_BASE_URL=https://orbit.elstella.com
-      - API_BASE_URL=https://api.orbit.elstella.com
+      - APP_BASE_URL=https://adsapi.alaikis.com
+      - API_BASE_URL=https://adsapi.alaikis.com/api/v1
+      - CORS_ALLOWED_ORIGINS=https://ads.alaikis.com,https://adms.alaikis.com
       - PORT=8080
       - JWT_SECRET=$JWT_SECRET
       - ENCRYPTION_MASTER_KEY=$ENCRYPTION_MASTER_KEY
