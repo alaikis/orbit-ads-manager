@@ -1,10 +1,6 @@
 /** @type {import('next').NextConfig} */
-const BUILD_TIMESTAMP = Date.now()
-
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone',
-  generateBuildId: async () => `build-${BUILD_TIMESTAMP}`,
   async headers() {
     return [
       {
@@ -26,14 +22,6 @@ const nextConfig = {
         ],
       },
     ]
-  },
-  webpack: (config, { isServer, dev }) => {
-    if (!isServer && !dev) {
-      // Add unique suffix to all chunk filenames to bust browser cache
-      config.output.chunkFilename = `static/chunks/[chunkhash]-${BUILD_TIMESTAMP}.js`
-      config.output.filename = `static/chunks/[chunkhash]-${BUILD_TIMESTAMP}.js`
-    }
-    return config
   },
 }
 
