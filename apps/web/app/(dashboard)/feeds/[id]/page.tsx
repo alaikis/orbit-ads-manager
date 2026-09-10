@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { feedService } from '@/lib/api'
-import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 const FORMAT_LABEL: Record<string, string> = {
@@ -31,7 +30,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/feeds" className="btn btn-ghost"><ArrowLeft size={16} className="mr-2" />返回 Feed 列表</Link>
+          <Link href="/feeds" className="btn btn-ghost">返回 Feed 列表</Link>
         </div>
         <div className="card p-12 text-center">
           <p className="text-danger-500 mb-4">{(error as Error).message}</p>
@@ -45,7 +44,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/feeds" className="btn btn-ghost"><ArrowLeft size={16} className="mr-2" />返回 Feed 列表</Link>
+          <Link href="/feeds" className="btn btn-ghost">返回 Feed 列表</Link>
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">Feed 详情</h1>
             <p className="text-sm text-text-muted mt-1">加载中...</p>
@@ -70,7 +69,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/feeds" className="btn btn-ghost"><ArrowLeft size={16} className="mr-2" />返回 Feed 列表</Link>
+        <Link href="/feeds" className="btn btn-ghost">返回 Feed 列表</Link>
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">{feed?.name || 'Feed 详情'}</h1>
           <p className="text-sm text-text-muted mt-1">格式: {FORMAT_LABEL[feed?.format || ''] || feed?.format || '-'} | 状态: {feed?.status || '-'}</p>

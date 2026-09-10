@@ -1,18 +1,40 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { useState } from 'react'
-import { RefreshCw } from 'lucide-react'
 
 type Tab = 'profile' | 'members' | 'notifications' | 'auto_approve' | 'security'
 
 export default function SettingsPage() {
+  const queryClient = useQueryClient()
   const [tab, setTab] = useState<Tab>('profile')
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['tenant'],
-    queryFn: () => api.get('/tenants/1'),
+    queryFn: () => api.get('/tenants/current'),
   })
+
+  const [saveMessage, setSaveMessage] = useState('')
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: Record<string, unknown>) => api.patch('/tenants/current', payload),
+    onSuccess: () => {
+      setSaveMessage('保存成功')
+      queryClient.invalidateQueries({ queryKey: ['tenant'] })
+      setTimeout(() => setSaveMessage(''), 3000)
+    },
+    onError: () => setSaveMessage('保存失败'),
+  })
+
+  const handleSaveProfile = () => {
+    const form = document.getElementById('settings-profile-form') as HTMLFormElement | null
+    if (!form) return
+    const formData = new FormData(form)
+    updateMutation.mutate({
+      name: formData.get('name'),
+      timezone: formData.get('timezone'),
+    })
+  }
 
   if (error) {
     return (
@@ -36,7 +58,9 @@ export default function SettingsPage() {
           <h1 className="text-2xl font-semibold text-text-primary">系统设置</h1>
           <p className="text-sm text-text-muted mt-1">管理租户、成员与系统偏好</p>
         </div>
-        <button onClick={() => refetch()} className="btn btn-secondary"><RefreshCw size={16} /></button>
+        <div className="flex gap-2">
+          <button onClick={() => refetch()} className="btn btn-secondary">刷新</button>
+        </div>
       </div>
       <div className="flex gap-6">
         <nav className="w-48 space-y-1">
@@ -68,21 +92,22 @@ export default function SettingsPage() {
           ) : (
             <>
               {tab === 'profile' && (
-                <div className="space-y-4">
+                <div className="space-y-4" id="settings-profile-form">
                   <h2 className="font-title-md text-text-primary">租户资料</h2>
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1.5">租户名称</label>
-                    <input className="input" placeholder="输入租户名称" defaultValue={(data as any)?.name || ''} />
+                    <input className="input" name="name" placeholder="输入租户名称" defaultValue={(data as any)?.name || ''} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1.5">时区</label>
-                    <select className="input">
-                      <option>Asia/Shanghai</option>
-                      <option>America/New_York</option>
-                      <option>Europe/London</option>
+                    <select className="input" name="timezone" defaultValue={(data as any)?.timezone || 'Asia/Shanghai'}>
+                      <option value="Asia/Shanghai">Asia/Shanghai</option>
+                      <option value="America/New_York">America/New_York</option>
+                      <option value="Europe/London">Europe/London</option>
                     </select>
                   </div>
-                  <button className="btn btn-primary">保存</button>
+                  <button onClick={handleSaveProfile} disabled={updateMutation.isPending} className="btn btn-primary">{updateMutation.isPending ? '保存中...' : '保存'}</button>
+                  {saveMessage && <p className="text-sm text-success-500">{saveMessage}</p>}
                 </div>
               )}
               {tab === 'members' && (

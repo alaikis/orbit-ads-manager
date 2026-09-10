@@ -3,7 +3,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { workspaceService } from '@/lib/api'
 import { useState } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 
 type Workspace = { id: number; name: string; plan: string; status: string; created_at?: string }
@@ -13,16 +12,25 @@ const PLAN_BADGE: Record<string, string> = { beta: 'badge-info', pro: 'badge-pri
 export default function WorkspacesPage() {
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
+  const [editingWs, setEditingWs] = useState<Workspace | null>(null)
   const [name, setName] = useState('')
   const [plan, setPlan] = useState('beta')
+  const [formError, setFormError] = useState('')
 
   const { data, isLoading, error, refetch } = useQuery({ queryKey: ['workspaces'], queryFn: () => workspaceService.list() })
   const workspaces: Workspace[] = (data as any)?.items || []
 
   const createMutation = useMutation({
     mutationFn: (payload: { name: string; plan: string }) => workspaceService.create(payload),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['workspaces'] }); setShowForm(false); setName(''); setPlan('beta') },
-    onError: (err: unknown) => alert('创建失败：' + (err instanceof Error ? err.message : '未知错误')),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['workspaces'] }); setShowForm(false); setName(''); setPlan('beta'); setFormError('') },
+    onError: (err: unknown) => setFormError(err instanceof Error ? err.message : '创建失败'),
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: { id: number; data: { name?: string; plan?: string } }) =>
+      workspaceService.update(payload.id, payload.data),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['workspaces'] }); setEditingWs(null); setFormError('') },
+    onError: (err: unknown) => setFormError(err instanceof Error ? err.message : '更新失败'),
   })
 
   const deleteMutation = useMutation({
@@ -31,7 +39,32 @@ export default function WorkspacesPage() {
     onError: (err: unknown) => alert('删除失败：' + (err instanceof Error ? err.message : '未知错误')),
   })
 
-  const handleCreate = () => { if (!name.trim()) return; createMutation.mutate({ name, plan }) }
+  const handleCreate = () => {
+    setFormError('')
+    if (!name.trim()) { setFormError('请输入工作区名称'); return }
+    createMutation.mutate({ name: name.trim(), plan })
+  }
+
+  const startEdit = (ws: Workspace) => {
+    setEditingWs(ws)
+    setName(ws.name)
+    setPlan(ws.plan)
+    setFormError('')
+  }
+
+  const saveEdit = () => {
+    if (!editingWs) return
+    const payload: { name?: string; plan?: string } = {}
+    if (name.trim()) payload.name = name.trim()
+    if (plan) payload.plan = plan
+    updateMutation.mutate({ id: editingWs.id, data: payload })
+  }
+
+  const confirmDelete = (id: number) => {
+    if (window.confirm('确定要删除这个工作区吗？')) {
+      deleteMutation.mutate(id)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -41,8 +74,8 @@ export default function WorkspacesPage() {
           <p className="text-sm text-text-muted mt-1">管理工作区、计划与团队隔离</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => refetch()} className="btn btn-secondary"><RefreshCw size={16} /></button>
-          <button onClick={() => setShowForm(!showForm)} className="btn btn-primary"><Plus size={16} /> 新建工作区</button>
+          <button onClick={() => refetch()} className="btn btn-secondary">刷新</button>
+          <button onClick={() => setShowForm(!showForm)} className="btn btn-primary">新建工作区</button>
         </div>
       </div>
 
@@ -63,9 +96,35 @@ export default function WorkspacesPage() {
               </select>
             </div>
           </div>
+          {formError && <div className="text-sm text-danger-500 bg-danger-bg p-3 rounded-md">{formError}</div>}
           <div className="flex gap-2">
             <button onClick={handleCreate} className="btn btn-primary" disabled={createMutation.isPending}>创建</button>
-            <button onClick={() => setShowForm(false)} className="btn btn-secondary">取消</button>
+            <button onClick={() => { setShowForm(false); setFormError('') }} className="btn btn-secondary">取消</button>
+          </div>
+        </div>
+      )}
+
+      {editingWs && (
+        <div className="card p-6 space-y-4">
+          <h2 className="font-title-md text-text-primary">编辑工作区</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1.5">名称</label>
+              <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1.5">计划</label>
+              <select className="input" value={plan} onChange={(e) => setPlan(e.target.value)}>
+                <option value="beta">Beta</option>
+                <option value="pro">Pro</option>
+                <option value="enterprise">Enterprise</option>
+              </select>
+            </div>
+          </div>
+          {formError && <div className="text-sm text-danger-500 bg-danger-bg p-3 rounded-md">{formError}</div>}
+          <div className="flex gap-2">
+            <button onClick={saveEdit} className="btn btn-primary" disabled={updateMutation.isPending}>保存</button>
+            <button onClick={() => setEditingWs(null)} className="btn btn-secondary">取消</button>
           </div>
         </div>
       )}
@@ -104,7 +163,10 @@ export default function WorkspacesPage() {
                   <td className="px-4 py-3"><span className={PLAN_BADGE[ws.plan] || 'badge-info'}>{ws.plan}</span></td>
                   <td className="px-4 py-3"><span className={`badge ${ws.status === 'active' ? 'bg-success-bg text-success' : 'bg-surface-subtle text-text-muted'}`}>{ws.status}</span></td>
                   <td className="px-4 py-3 text-text-secondary">{ws.created_at ? new Date(ws.created_at).toLocaleString('zh-CN') : '-'}</td>
-                  <td className="px-4 py-3 text-right"><button onClick={() => deleteMutation.mutate(ws.id)} className="px-2 py-1 text-danger-500 hover:bg-danger-bg rounded-md text-xs transition-colors">删除</button></td>
+                  <td className="px-4 py-3 text-right space-x-2">
+                    <button onClick={() => startEdit(ws)} className="px-2 py-1 text-primary-600 hover:bg-primary-50 rounded-md text-xs transition-colors">编辑</button>
+                    <button onClick={() => confirmDelete(ws.id)} className="px-2 py-1 text-danger-500 hover:bg-danger-bg rounded-md text-xs transition-colors">删除</button>
+                  </td>
                 </tr>
               ))
             ) : (

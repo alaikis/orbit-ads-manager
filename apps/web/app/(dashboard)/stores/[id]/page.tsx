@@ -2,7 +2,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { storeService } from '@/lib/api'
-import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 type Store = { id: number; name: string; platform: string; status: string; last_synced_at?: string; base_url?: string; api_key?: string; api_secret?: string }
@@ -39,7 +38,7 @@ export default function StoreDetailPage({ params }: { params: { id: string } }) 
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/stores" className="btn btn-ghost"><ArrowLeft size={18} /></Link>
+          <Link href="/stores" className="btn btn-ghost">返回店铺列表</Link>
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">店铺详情</h1>
             <p className="text-sm text-text-muted mt-1">加载失败</p>
@@ -57,7 +56,7 @@ export default function StoreDetailPage({ params }: { params: { id: string } }) 
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/stores" className="btn btn-ghost"><ArrowLeft size={18} /></Link>
+          <Link href="/stores" className="btn btn-ghost">返回店铺列表</Link>
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">{store?.name || '店铺详情'}</h1>
             <p className="text-sm text-text-muted mt-1">平台: {PLATFORM_LABEL[store?.platform || ''] || store?.platform || '-'} | 状态: {store?.status || '-'}</p>

@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query'
 import { metricsService, workspaceService } from '@/lib/api'
 import { MetricCard } from '@/components/dashboard/metric-card'
 import { QuickActions } from '@/components/dashboard/quick-actions'
-import { RefreshCw } from 'lucide-react'
 
 export default function DashboardPage() {
   const { data: workspaceData } = useQuery({

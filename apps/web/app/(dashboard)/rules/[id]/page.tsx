@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { ruleService } from '@/lib/api'
-import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 const STATUS_BADGE: Record<string, string> = {
@@ -24,7 +23,7 @@ export default function RuleDetailPage({ params }: { params: { id: string } }) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/rules" className="btn btn-ghost"><ArrowLeft size={16} className="mr-2" />返回规则列表</Link>
+          <Link href="/rules" className="btn btn-ghost">返回规则列表</Link>
         </div>
         <div className="card p-12 text-center">
           <p className="text-danger-500 mb-4">{(error as Error).message}</p>
@@ -38,7 +37,7 @@ export default function RuleDetailPage({ params }: { params: { id: string } }) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/rules" className="btn btn-ghost"><ArrowLeft size={16} className="mr-2" />返回规则列表</Link>
+          <Link href="/rules" className="btn btn-ghost">返回规则列表</Link>
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">规则详情</h1>
             <p className="text-sm text-text-muted mt-1">加载中...</p>
@@ -63,7 +62,7 @@ export default function RuleDetailPage({ params }: { params: { id: string } }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/rules" className="btn btn-ghost"><ArrowLeft size={16} className="mr-2" />返回规则列表</Link>
+        <Link href="/rules" className="btn btn-ghost">返回规则列表</Link>
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">{rule?.name || '规则详情'}</h1>
           <p className="text-sm text-text-muted mt-1">状态: {rule?.status || '-'}</p>

@@ -17,6 +17,14 @@ export class ProductService {
     return apiClient.get<Product>(`/products/${id}`)
   }
 
+  async update(id: number, data: Partial<Product>): Promise<Product> {
+    return apiClient.patch<Product>(`/products/${id}`, data)
+  }
+
+  async delete(id: number): Promise<void> {
+    return apiClient.delete<void>(`/products/${id}`)
+  }
+
   async sync(storeId: number): Promise<{ message: string }> {
     return apiClient.post<{ message: string }>(`/products/sync`, { store_id: storeId })
   }

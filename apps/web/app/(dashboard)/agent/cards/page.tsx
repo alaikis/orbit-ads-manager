@@ -3,7 +3,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
 import { useState } from 'react'
-import { RefreshCw } from 'lucide-react'
 
 type Action = { id: number; action_type: string; target_type: string; target_id?: string; risk_level: string; status: string; params: any }
 
@@ -66,7 +65,7 @@ export default function AgentCardsPage() {
           <h1 className="text-2xl font-semibold text-text-primary">待确认动作中心</h1>
           <p className="text-sm text-text-muted mt-1">查看与管理所有待确认的 Agent 动作</p>
         </div>
-        <button onClick={() => refetch()} className="btn btn-secondary"><RefreshCw size={16} /></button>
+        <button onClick={() => refetch()} className="btn btn-secondary">刷新</button>
       </div>
       {actionError && (
         <div className="card p-3 bg-danger-bg text-danger-500 text-sm">{actionError}</div>

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Send, Square, Bot } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 
 export default function AgentPage() {
@@ -56,7 +55,7 @@ export default function AgentPage() {
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.length === 0 && !error && (
             <div className="text-center text-text-muted mt-20">
-              <Bot size={48} className="mx-auto mb-4 text-primary-500" />
+              <div className="text-4xl mb-4">🤖</div>
               <p className="text-lg mb-2">试试问我：昨天花了多少、ROAS 如何？</p>
             </div>
           )}
@@ -97,7 +96,7 @@ export default function AgentPage() {
               disabled={loading}
             />
             <button onClick={handleSend} disabled={loading || !input.trim()} className="btn btn-primary">
-              {loading ? <Square size={18} /> : <Send size={18} />}
+              {loading ? '停止' : '发送'}
             </button>
           </div>
         </div>

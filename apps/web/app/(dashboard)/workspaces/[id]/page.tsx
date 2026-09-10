@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { workspaceService } from '@/lib/api'
-import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 type Workspace = {
@@ -40,7 +39,7 @@ export default function WorkspaceDetailPage({ params }: { params: { id: string }
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/workspaces" className="btn btn-ghost inline-flex items-center gap-2"><ArrowLeft size={18} />返回工作区列表</Link>
+          <Link href="/workspaces" className="btn btn-ghost inline-flex items-center gap-2">返回工作区列表</Link>
         </div>
         <div className="card p-12 text-center">
           <p className="text-danger-500 mb-4">{(error as Error).message}</p>
@@ -54,7 +53,7 @@ export default function WorkspaceDetailPage({ params }: { params: { id: string }
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/workspaces" className="btn btn-ghost inline-flex items-center gap-2"><ArrowLeft size={18} />返回工作区列表</Link>
+          <Link href="/workspaces" className="btn btn-ghost inline-flex items-center gap-2">返回工作区列表</Link>
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">{workspace?.name || '工作区详情'}</h1>
             <p className="text-sm text-text-muted mt-1">ID: {workspace?.id || workspaceId}</p>
