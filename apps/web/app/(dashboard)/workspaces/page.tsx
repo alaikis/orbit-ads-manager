@@ -4,15 +4,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { workspaceService } from '@/lib/api'
 import { useState } from 'react'
 import { Plus, RefreshCw } from 'lucide-react'
+import Link from 'next/link'
 
-type Workspace = {
-  id: number
-  name: string
-  plan: string
-  owner_user_id: number
-  created_at: string
-  updated_at: string
-}
+type Workspace = { id: number; name: string; plan: string; status: string; created_at?: string }
+
+const PLAN_BADGE: Record<string, string> = { beta: 'badge-info', pro: 'badge-primary', enterprise: 'badge-warning' }
 
 export default function WorkspacesPage() {
   const queryClient = useQueryClient()
@@ -20,36 +16,22 @@ export default function WorkspacesPage() {
   const [name, setName] = useState('')
   const [plan, setPlan] = useState('beta')
 
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['workspaces'],
-    queryFn: () => workspaceService.list(),
-  })
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: ['workspaces'], queryFn: () => workspaceService.list() })
+  const workspaces: Workspace[] = (data as any)?.items || []
 
   const createMutation = useMutation({
     mutationFn: (payload: { name: string; plan: string }) => workspaceService.create(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workspaces'] })
-      setShowForm(false)
-      setName('')
-      setPlan('beta')
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['workspaces'] }); setShowForm(false); setName(''); setPlan('beta') },
     onError: (err: unknown) => alert('创建失败：' + (err instanceof Error ? err.message : '未知错误')),
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => workspaceService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workspaces'] })
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['workspaces'] }) },
     onError: (err: unknown) => alert('删除失败：' + (err instanceof Error ? err.message : '未知错误')),
   })
 
-  const handleCreate = () => {
-    if (!name.trim()) return
-    createMutation.mutate({ name, plan })
-  }
-
-  const workspaces: Workspace[] = (data as any)?.items || []
+  const handleCreate = () => { if (!name.trim()) return; createMutation.mutate({ name, plan }) }
 
   return (
     <div className="space-y-6">
@@ -88,9 +70,7 @@ export default function WorkspacesPage() {
         </div>
       )}
 
-      {error && (
-        <div className="card p-6 text-danger-500">加载失败：{(error as Error).message}</div>
-      )}
+      {error && (<div className="card p-6 text-danger-500">加载失败：{(error as Error).message}</div>)}
 
       <div className="card overflow-hidden">
         <table className="w-full text-sm">
@@ -99,29 +79,36 @@ export default function WorkspacesPage() {
               <th className="text-left px-4 py-3 font-medium text-text-secondary">ID</th>
               <th className="text-left px-4 py-3 font-medium text-text-secondary">名称</th>
               <th className="text-left px-4 py-3 font-medium text-text-secondary">计划</th>
+              <th className="text-left px-4 py-3 font-medium text-text-secondary">状态</th>
               <th className="text-left px-4 py-3 font-medium text-text-secondary">创建时间</th>
               <th className="text-right px-4 py-3 font-medium text-text-secondary">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-default">
             {isLoading ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-text-muted">加载中...</td></tr>
-            ) : workspaces && workspaces.length > 0 ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <tr key={i}>
+                  <td className="px-4 py-3"><div className="h-4 w-8 rounded bg-surface-subtle animate-pulse" /></td>
+                  <td className="px-4 py-3"><div className="h-4 w-32 rounded bg-surface-subtle animate-pulse" /></td>
+                  <td className="px-4 py-3"><div className="h-5 w-16 rounded-full bg-surface-subtle animate-pulse" /></td>
+                  <td className="px-4 py-3"><div className="h-5 w-14 rounded-full bg-surface-subtle animate-pulse" /></td>
+                  <td className="px-4 py-3"><div className="h-4 w-40 rounded bg-surface-subtle animate-pulse" /></td>
+                  <td className="px-4 py-3 text-right"><div className="ml-auto h-7 w-14 rounded bg-surface-subtle animate-pulse" /></td>
+                </tr>
+              ))
+            ) : workspaces.length > 0 ? (
               workspaces.map((ws) => (
                 <tr key={ws.id} className="hover:bg-surface-hover">
-                  <td className="px-4 py-3">{ws.id}</td>
-                  <td className="px-4 py-3 font-medium text-text-primary">{ws.name}</td>
-                  <td className="px-4 py-3"><span className="badge badge-info">{ws.plan}</span></td>
-                  <td className="px-4 py-3 text-text-secondary">{new Date(ws.created_at).toLocaleString('zh-CN')}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button onClick={() => deleteMutation.mutate(ws.id)} className="px-2 py-1 text-danger-500 hover:bg-danger-50 rounded-md text-xs">
-                      删除
-                    </button>
-                  </td>
+                  <td className="px-4 py-3 text-text-secondary">{ws.id}</td>
+                  <td className="px-4 py-3"><Link href={`/workspaces/${ws.id}`} className="font-medium text-primary-600 hover:underline">{ws.name}</Link></td>
+                  <td className="px-4 py-3"><span className={PLAN_BADGE[ws.plan] || 'badge-info'}>{ws.plan}</span></td>
+                  <td className="px-4 py-3"><span className={`badge ${ws.status === 'active' ? 'bg-success-bg text-success' : 'bg-surface-subtle text-text-muted'}`}>{ws.status}</span></td>
+                  <td className="px-4 py-3 text-text-secondary">{ws.created_at ? new Date(ws.created_at).toLocaleString('zh-CN') : '-'}</td>
+                  <td className="px-4 py-3 text-right"><button onClick={() => deleteMutation.mutate(ws.id)} className="px-2 py-1 text-danger-500 hover:bg-danger-bg rounded-md text-xs transition-colors">删除</button></td>
                 </tr>
               ))
             ) : (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-text-muted">暂无工作区</td></tr>
+              <tr><td colSpan={6} className="px-4 py-12 text-center text-text-muted">暂无工作区</td></tr>
             )}
           </tbody>
         </table>
