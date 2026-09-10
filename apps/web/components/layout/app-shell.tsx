@@ -26,12 +26,17 @@ const menuGroups = [
     { href: '/', label: '工作台', icon: LayoutDashboard },
     { href: '/reports', label: '数据报表', icon: BarChart3 },
   ]},
-  { title: '规则与自动化', items: [
-    { href: '/rules', label: '规则管理', icon: ListChecks },
+  { title: '连接', items: [
+    { href: '/stores', label: '店铺', icon: Store },
+    { href: '/accounts', label: '广告账户', icon: Monitor },
+    { href: '/settings/connections', label: '连接凭据', icon: Settings },
   ]},
   { title: '资产', items: [
     { href: '/products', label: '商品', icon: Package },
     { href: '/feeds', label: 'Feed', icon: Rss },
+  ]},
+  { title: '规则与自动化', items: [
+    { href: '/rules', label: '规则管理', icon: ListChecks },
   ]},
   { title: 'AI 能力', items: [
     { href: '/agent', label: 'Agent 对话', icon: Bot },

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { useState } from 'react'
 
-type Tab = 'profile' | 'members' | 'notifications' | 'auto_approve' | 'security'
+type Tab = 'profile' | 'members' | 'notifications' | 'auto_approve' | 'security' | 'connections'
 
 export default function SettingsPage() {
   const queryClient = useQueryClient()
@@ -70,6 +70,7 @@ export default function SettingsPage() {
             { id: 'notifications', label: '通知偏好' },
             { id: 'auto_approve', label: '自动执行' },
             { id: 'security', label: '安全' },
+            { id: 'connections', label: '连接凭据' },
           ].map((item) => (
             <button
               key={item.id}
@@ -158,6 +159,13 @@ export default function SettingsPage() {
                     <input type="password" className="input" placeholder="••••••••" />
                   </div>
                   <button className="btn btn-primary">修改密码</button>
+                </div>
+              )}
+              {tab === 'connections' && (
+                <div className="space-y-4">
+                  <h2 className="font-title-md text-text-primary">连接凭据</h2>
+                  <p className="text-sm text-text-muted">管理店铺、广告平台、AI、邮件等接入凭据。Token 经过 AES-256-GCM 加密存储。</p>
+                  <a href="/settings/connections" className="btn btn-primary">前往连接管理</a>
                 </div>
               )}
             </>
