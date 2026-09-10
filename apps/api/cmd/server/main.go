@@ -20,7 +20,6 @@ import (
 	oauthHandlers "orbit/apps/api/internal/oauth/handlers"
 	intelHandlers "orbit/apps/api/internal/intelligence/handlers"
 	workspaceHandlers "orbit/apps/api/internal/workspace"
-	providerHandlers "orbit/apps/api/internal/provider"
 	connHandlers "orbit/apps/api/internal/connection"
 	connRefresh "orbit/apps/api/internal/connection"
 	"orbit/apps/api/internal/auth"
@@ -73,6 +72,7 @@ func startServer(cancel context.CancelFunc) {
 		auth.RegisterRoutes(api)
 		tenantHandlers.RegisterStoreRoutes(api)
 		tenantHandlers.RegisterProductRoutes(api)
+		tenantHandlers.RegisterTenantSettingsRoutes(api)
 		adHandlers.RegisterAdAccountRoutes(api)
 		adHandlers.RegisterCampaignRoutes(api)
 		reportHandlers.RegisterMetricsRoutes(api)
@@ -85,7 +85,6 @@ func startServer(cancel context.CancelFunc) {
 		oauthHandlers.RegisterOAuthRoutes(api)
 		intelHandlers.RegisterIntelligenceRoutes(api)
 		workspaceHandlers.RegisterWorkspaceRoutes(api)
-		providerHandlers.RegisterProviderRoutes(api)
 		connHandlers.RegisterConnectionRoutes(api)
 		httputil.RegisterHealthRoutes(api)
 	}

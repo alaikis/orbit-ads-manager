@@ -26,13 +26,10 @@ const menuGroups = [
     { href: '/', label: '工作台', icon: LayoutDashboard },
     { href: '/reports', label: '数据报表', icon: BarChart3 },
   ]},
-  { title: '投放管理', items: [
-    { href: '/advertising/campaigns', label: '广告管理', icon: Monitor },
+  { title: '规则与自动化', items: [
     { href: '/rules', label: '规则管理', icon: ListChecks },
   ]},
   { title: '资产', items: [
-    { href: '/stores', label: '店铺', icon: Store },
-    { href: '/accounts', label: '广告账户', icon: ShoppingBag },
     { href: '/products', label: '商品', icon: Package },
     { href: '/feeds', label: 'Feed', icon: Rss },
   ]},
@@ -44,7 +41,6 @@ const menuGroups = [
     { href: '/settings', label: '系统设置', icon: Settings },
     { href: '/notifications', label: '通知中心', icon: Bell },
     { href: '/workspaces', label: '工作区管理', icon: Package },
-    { href: '/settings/providers', label: 'Provider 配置', icon: Settings },
   ]},
 ]
 
