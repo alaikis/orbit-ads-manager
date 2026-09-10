@@ -146,7 +146,7 @@ func Load() {
 			Timeout: time.Duration(aiTimeout) * time.Millisecond,
 		},
 		CORS: CORSConfig{
-			AllowedOrigins: viper.GetStringSlice("CORS_ALLOWED_ORIGINS"),
+			AllowedOrigins: strings.Split(viper.GetString("CORS_ALLOWED_ORIGINS"), ","),
 		},
 	}
 }
