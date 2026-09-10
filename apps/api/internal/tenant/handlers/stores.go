@@ -97,20 +97,60 @@ func UpdateStore(c *gin.Context) {
 	tenantID, _ := c.Get("tenant_id")
 	id := c.Param("id")
 	var conn model.PlatformConn
-	if err := database.DB.Where("id = ? AND tenant_id = ?", id, tenantID).First(&conn).Error; err != nil {
+	if err := database.DB.Where("id = ? AND tenant_id = ? AND type = 'store'", id, tenantID).First(&conn).Error; err != nil {
 		httputil.NotFound(c, "store not found")
 		return
 	}
-	var req StoreRequest
+
+	var req struct {
+		Name       *string `json:"name,omitempty"`
+		BaseURL    *string `json:"base_url,omitempty" binding:"omitempty,url"`
+		APIKey     *string `json:"api_key,omitempty"`
+		APISecret  *string `json:"api_secret,omitempty"`
+		Status     *string `json:"status,omitempty" enums:"bound,disabled"`
+	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		httputil.BadRequest(c, err.Error(), nil)
 		return
 	}
-	conn.Meta = map[string]interface{}{"name": req.Name}
+
+	if req.Name != nil {
+		conn.Meta = map[string]interface{}{"name": *req.Name}
+	}
+	if req.Status != nil {
+		conn.Status = *req.Status
+	}
 	if err := database.DB.Save(&conn).Error; err != nil {
 		httputil.InternalError(c, "failed to update store")
 		return
 	}
+
+	if req.BaseURL != nil || req.APIKey != nil || req.APISecret != nil {
+		var storeConfig model.StoreConfig
+		if err := database.DB.Where("store_id = ?", conn.ID).First(&storeConfig).Error; err == nil {
+			if req.BaseURL != nil {
+				storeConfig.BaseURL = *req.BaseURL
+			}
+			if req.APIKey != nil || req.APISecret != nil {
+				extraHeaders := map[string]interface{}{}
+				if v, ok := storeConfig.ExtraHeaders["api_key"].(string); ok {
+					extraHeaders["api_key"] = v
+				}
+				if req.APIKey != nil {
+					extraHeaders["api_key"] = *req.APIKey
+				}
+				if v, ok := storeConfig.ExtraHeaders["api_secret"].(string); ok {
+					extraHeaders["api_secret"] = v
+				}
+				if req.APISecret != nil {
+					extraHeaders["api_secret"] = *req.APISecret
+				}
+				storeConfig.ExtraHeaders = extraHeaders
+			}
+			database.DB.Save(&storeConfig)
+		}
+	}
+
 	httputil.Success(c, conn)
 }
 

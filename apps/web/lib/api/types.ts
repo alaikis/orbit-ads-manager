@@ -50,6 +50,9 @@ export interface CreateStoreRequest {
 export interface UpdateStoreRequest {
   name?: string
   status?: string
+  base_url?: string
+  api_key?: string
+  api_secret?: string
 }
 
 export interface Campaign {

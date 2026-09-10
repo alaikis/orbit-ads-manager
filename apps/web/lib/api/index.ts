@@ -40,6 +40,7 @@ export { workspaceService } from './services/workspace.service'
 export { connectionService } from './services/connection.service'
 export { providerService } from './services/provider.service'
 export { adAccountService } from './services/ad-account.service'
+export { storeService } from './services/store.service'
 
 // Service classes (for inheritance/extension)
 export { AuthService } from './services/auth.service'
