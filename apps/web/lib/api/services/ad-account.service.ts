@@ -15,8 +15,12 @@ export class AdAccountService {
     return apiClient.post<AdAccount>('/ad-accounts', data)
   }
 
-  async authorize(data: { platform: string; authorization_url: string }): Promise<AdAccount> {
-    return apiClient.post<AdAccount>('/ad-accounts/authorize', data)
+  async update(id: number, data: { name?: string; currency?: string; customer_id?: string; status?: string }): Promise<AdAccount> {
+    return apiClient.patch<AdAccount>(`/ad-accounts/${id}`, data)
+  }
+
+  async authorize(platform: string): Promise<{ authorization_url: string; state: string }> {
+    return apiClient.post<{ authorization_url: string; state: string }>(`/oauth/connect/${platform}`, {})
   }
 
   async delete(id: number): Promise<void> {

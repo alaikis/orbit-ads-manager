@@ -74,6 +74,35 @@ func UpdateAdAccount(c *gin.Context) {
 		httputil.NotFound(c, "ad account not found")
 		return
 	}
+
+	var req struct {
+		Name       *string `json:"name,omitempty"`
+		Currency   *string `json:"currency,omitempty"`
+		CustomerID *string `json:"customer_id,omitempty"`
+		Status     *string `json:"status,omitempty" enums:"active,disabled"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httputil.BadRequest(c, err.Error(), nil)
+		return
+	}
+
+	if req.Name != nil {
+		account.Name = *req.Name
+	}
+	if req.Currency != nil {
+		account.Currency = *req.Currency
+	}
+	if req.CustomerID != nil {
+		account.CustomerID = *req.CustomerID
+	}
+	if req.Status != nil {
+		account.Status = *req.Status
+	}
+
+	if err := database.DB.Save(&account).Error; err != nil {
+		httputil.InternalError(c, "failed to update ad account: "+err.Error())
+		return
+	}
 	httputil.Success(c, account)
 }
 

@@ -30,9 +30,6 @@ export type {
 
 // Services
 export { authService } from './services/auth.service'
-export { storeService } from './services/store.service'
-export { campaignService } from './services/campaign.service'
-export { adAccountService } from './services/ad-account.service'
 export { metricsService } from './services/metrics.service'
 export { notificationService } from './services/notification.service'
 export { productService } from './services/product.service'
@@ -40,13 +37,12 @@ export { feedService } from './services/feed.service'
 export { reportService } from './services/report.service'
 export { ruleService } from './services/rule.service'
 export { workspaceService } from './services/workspace.service'
+export { connectionService } from './services/connection.service'
 export { providerService } from './services/provider.service'
+export { adAccountService } from './services/ad-account.service'
 
 // Service classes (for inheritance/extension)
 export { AuthService } from './services/auth.service'
-export { StoreService } from './services/store.service'
-export { CampaignService } from './services/campaign.service'
-export { AdAccountService } from './services/ad-account.service'
 export { MetricsService } from './services/metrics.service'
 export { NotificationService } from './services/notification.service'
 export { ProductService } from './services/product.service'
