@@ -4,8 +4,10 @@ import { useQuery } from '@tanstack/react-query'
 import { metricsService, workspaceService } from '@/lib/api'
 import { MetricCard } from '@/components/dashboard/metric-card'
 import { QuickActions } from '@/components/dashboard/quick-actions'
+import { useState, useEffect } from 'react'
 
 export default function DashboardPage() {
+  const [autoRefresh, setAutoRefresh] = useState(false)
   const { data: workspaceData } = useQuery({
     queryKey: ['workspace', 'current'],
     queryFn: () => workspaceService.getCurrent(),
@@ -16,7 +18,16 @@ export default function DashboardPage() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['dashboard', workspaceId],
     queryFn: () => metricsService.getSummary(workspaceId ? { workspace_id: workspaceId } : undefined),
+    refetchInterval: autoRefresh ? 30000 : false,
   })
+
+  useEffect(() => {
+    if (!autoRefresh) return
+    const timer = setInterval(() => {
+      refetch()
+    }, 30000)
+    return () => clearInterval(timer)
+  }, [autoRefresh, refetch])
 
   const metrics = data || {}
 
@@ -37,9 +48,14 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-text-primary">工作台</h1>
-        <p className="text-sm text-text-muted mt-1">欢迎回来，查看你的广告投放概况</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-text-primary">工作台</h1>
+          <p className="text-sm text-text-muted mt-1">欢迎回来，查看你的广告投放概况</p>
+        </div>
+        <button onClick={() => setAutoRefresh(!autoRefresh)} className={`btn ${autoRefresh ? 'btn-primary' : 'btn-secondary'}`}>
+          {autoRefresh ? '实时更新：开' : '实时更新：关'}
+        </button>
       </div>
 
       {isLoading ? (

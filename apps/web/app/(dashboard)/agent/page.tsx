@@ -1,7 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
+
+type Conversation = { id: number; title: string; status: string; created_at?: string }
 
 export default function AgentPage() {
   const [messages, setMessages] = useState<{ role: string; content: string; tool?: string }[]>([])
@@ -9,6 +12,13 @@ export default function AgentPage() {
   const [loading, setLoading] = useState(false)
   const [pendingActions, setPendingActions] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [conversationId, setConversationId] = useState<number | null>(null)
+
+  const { data: conversationsData } = useQuery({
+    queryKey: ['agent-conversations'],
+    queryFn: () => apiClient.get<{ items: Conversation[] }>('/agent/conversations'),
+  })
+  const conversations = (conversationsData as any)?.items || []
 
   const handleSend = async () => {
     if (!input.trim()) return
@@ -20,11 +30,16 @@ export default function AgentPage() {
     setError(null)
 
     try {
-      const data = await apiClient.post<{ response: string; tool?: string }>('/agent/chat', { message: userInput })
+      const payload: any = { message: userInput }
+      if (conversationId) payload.conversation_id = conversationId
+      const data = await apiClient.post<{ response: string; tool?: string; conversation_id?: number }>('/agent/chat', payload)
       if (data?.response) {
         const toolMsg = data.tool ? { role: 'tool' as const, content: data.response, tool: data.tool } : null
         const finalMsg = { role: 'assistant' as const, content: data.response }
         setMessages((prev) => (toolMsg ? [...prev, toolMsg, finalMsg] : [...prev, finalMsg]))
+        if (data.conversation_id && !conversationId) {
+          setConversationId(data.conversation_id)
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : '连接中断，请重试'
@@ -40,14 +55,35 @@ export default function AgentPage() {
     setMessages((prev) => prev.filter((m) => m.role !== 'system'))
   }
 
+  const loadConversation = async (id: number) => {
+    setConversationId(id)
+    setMessages([])
+    setError(null)
+    try {
+      const data = await apiClient.get<{ items: { role: string; content: string; tool?: string }[] }>(`/agent/conversations/${id}/messages`)
+      const items = (data as any)?.items || []
+      setMessages(items.map((m: any) => ({ role: m.role, content: m.content, tool: m.tool })))
+    } catch {
+      setError('加载历史消息失败')
+    }
+  }
+
   return (
     <div className="flex h-[calc(100vh-56px)]">
       <div className="w-64 border-r border-border-default p-4">
         <button className="btn btn-primary w-full mb-4">新对话</button>
         <div className="text-sm text-text-muted mb-2">历史会话</div>
         <div className="space-y-1">
-          {['昨天花了多少', 'ROAS 分析', '预算建议'].map((title, i) => (
-            <div key={i} className="px-3 py-2 rounded-md text-sm text-text-secondary hover:bg-surface-hover cursor-pointer truncate">{title}</div>
+          {conversations.map((c: Conversation) => (
+            <div
+              key={c.id}
+              onClick={() => loadConversation(c.id)}
+              className={`px-3 py-2 rounded-md text-sm cursor-pointer truncate ${
+                conversationId === c.id ? 'bg-primary-50 text-primary-700' : 'text-text-secondary hover:bg-surface-hover'
+              }`}
+            >
+              {c.title || `对话 ${c.id}`}
+            </div>
           ))}
         </div>
       </div>

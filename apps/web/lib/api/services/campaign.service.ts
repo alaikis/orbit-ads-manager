@@ -1,42 +1,29 @@
 import { apiClient } from '../client'
-import type { Campaign, AdGroup, MetricsSummary, PaginatedResponse } from '../types'
 
 export class CampaignService {
-  async list(params?: { 
-    page?: number
-    per_page?: number
-    platform?: string
-    status?: string
-    search?: string 
-  }): Promise<PaginatedResponse<Campaign>> {
-    const query = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : ''
-    return apiClient.get<PaginatedResponse<Campaign>>(`/advertising/campaigns${query}`)
+  async list(params?: { account_id?: number; status?: string }): Promise<{ items: any[] }> {
+    const query = params ? '?' + new URLSearchParams(Object.entries(params).filter(([,v]) => v !== undefined).reduce((a,[k,v]) => ({ ...a, [k]: String(v) }), {} as Record<string, string>)).toString() : ''
+    return apiClient.get<{ items: any[] }>(`/advertising/campaigns${query}`)
   }
 
-  async get(id: number): Promise<Campaign> {
-    return apiClient.get<Campaign>(`/advertising/campaigns/${id}`)
+  async get(id: number): Promise<any> {
+    return apiClient.get<any>(`/advertising/campaigns/${id}`)
   }
 
-  async getMetrics(id: number): Promise<MetricsSummary> {
-    return apiClient.get<MetricsSummary>(`/advertising/campaigns/${id}/metrics`)
+  async pause(id: number): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>(`/advertising/campaigns/${id}/pause`, {})
   }
 
-  async getAdGroups(id: number): Promise<AdGroup[]> {
-    const res = await apiClient.get<{ items: AdGroup[] } | AdGroup[]>(`/advertising/campaigns/${id}/ad-groups`)
-    if (Array.isArray(res)) return res
-    return (res as any)?.items || []
+  async resume(id: number): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>(`/advertising/campaigns/${id}/resume`, {})
   }
 
-  async pause(id: number): Promise<Campaign> {
-    return apiClient.post<Campaign>(`/advertising/campaigns/${id}/pause`)
+  async updateBudget(id: number, budgetCents: number): Promise<{ message: string; new_budget_cents: number }> {
+    return apiClient.post<{ message: string; new_budget_cents: number }>(`/advertising/campaigns/${id}/budget`, { new_budget_cents: budgetCents })
   }
 
-  async resume(id: number): Promise<Campaign> {
-    return apiClient.post<Campaign>(`/advertising/campaigns/${id}/resume`)
-  }
-
-  async updateBudget(id: number, newBudgetCents: number): Promise<Campaign> {
-    return apiClient.post<Campaign>(`/advertising/campaigns/${id}/budget`, { new_budget_cents: newBudgetCents })
+  async listAdGroups(id: number): Promise<{ items: any[] }> {
+    return apiClient.get<{ items: any[] }>(`/advertising/campaigns/${id}/ad-groups`)
   }
 }
 

@@ -21,7 +21,7 @@ export default function ReportsPage() {
   const [scopeType, setScopeType] = useState('account')
   const [scopeId, setScopeId] = useState('')
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const summaryQuery = useQuery({
     queryKey: ['reports', 'summary', workspaceId, dateRange, scopeType, scopeId],
     queryFn: () => apiClient.get<any>('/reports/summary', {
       workspace_id: workspaceId ? String(workspaceId) : undefined,
@@ -31,8 +31,30 @@ export default function ReportsPage() {
     }),
   })
 
-  const summary = data || {}
-  const points: ReportPoint[] = []
+  const timeseriesQuery = useQuery({
+    queryKey: ['reports', 'timeseries', workspaceId, dateRange, scopeType, scopeId],
+    queryFn: () => apiClient.get<any>('/reports/timeseries', {
+      workspace_id: workspaceId ? String(workspaceId) : undefined,
+      scope_type: scopeType,
+      scope_id: scopeId || undefined,
+      step: 'day',
+    }),
+  })
+
+  const summary = summaryQuery.data || {}
+  const points: ReportPoint[] = (timeseriesQuery.data?.items || []).map((item: any) => {
+    const m = item.metrics || {}
+    return {
+      date: item.date,
+      spend: Number(m.spend || 0),
+      clicks: Number(m.clicks || 0),
+      impressions: Number(m.impressions || 0),
+      conversions: m.conversions !== undefined ? Number(m.conversions) : undefined,
+    }
+  })
+
+  const isLoading = summaryQuery.isLoading || timeseriesQuery.isLoading
+  const error = summaryQuery.error || timeseriesQuery.error
 
   const exportMutation = useMutation({
     mutationFn: () => reportService.download(0),
@@ -73,7 +95,7 @@ export default function ReportsPage() {
         </div>
         <div className="card p-12 text-center">
           <p className="text-danger-500 mb-4">加载失败：{(error as Error).message}</p>
-          <button onClick={() => refetch()} className="btn btn-primary">重试</button>
+          <button onClick={() => { summaryQuery.refetch(); timeseriesQuery.refetch() }} className="btn btn-primary">重试</button>
         </div>
       </div>
     )
@@ -93,7 +115,7 @@ export default function ReportsPage() {
             <option value="last_90d">最近 90 天</option>
           </select>
           <button onClick={handleExport} disabled={exportMutation.isPending} className="btn btn-secondary">导出 CSV</button>
-          <button onClick={() => refetch()} className="btn btn-secondary">刷新</button>
+          <button onClick={() => { summaryQuery.refetch(); timeseriesQuery.refetch() }} className="btn btn-secondary">刷新</button>
         </div>
       </div>
 

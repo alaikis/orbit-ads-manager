@@ -9,6 +9,9 @@ type Tab = 'profile' | 'members' | 'notifications' | 'auto_approve' | 'security'
 export default function SettingsPage() {
   const queryClient = useQueryClient()
   const [tab, setTab] = useState<Tab>('profile')
+  const [autoApprove, setAutoApprove] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['tenant'],
     queryFn: () => api.get('/tenants/current'),
@@ -34,6 +37,25 @@ export default function SettingsPage() {
       name: formData.get('name'),
       timezone: formData.get('timezone'),
     })
+  }
+
+  const handleAutoApproveToggle = () => {
+    const next = !autoApprove
+    setAutoApprove(next)
+    updateMutation.mutate({ auto_approve_high_risk: next })
+  }
+
+  const handleChangePassword = () => {
+    if (!currentPassword || !newPassword) {
+      setSaveMessage('请填写当前密码和新密码')
+      return
+    }
+    updateMutation.mutate({
+      current_password: currentPassword,
+      new_password: newPassword,
+    })
+    setCurrentPassword('')
+    setNewPassword('')
   }
 
   if (error) {
@@ -141,8 +163,13 @@ export default function SettingsPage() {
                       <p className="text-sm font-medium text-text-primary">允许高风险自动执行</p>
                       <p className="text-xs text-text-muted mt-1">开启后 Agent 和规则可自动执行高风险操作</p>
                     </div>
-                    <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-surface-subtle transition-colors">
-                      <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
+                    <button
+                      onClick={handleAutoApproveToggle}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        autoApprove ? 'bg-primary-500' : 'bg-surface-subtle'
+                      }`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${autoApprove ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
                   </div>
                 </div>
@@ -152,13 +179,13 @@ export default function SettingsPage() {
                   <h2 className="font-title-md text-text-primary">安全</h2>
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1.5">当前密码</label>
-                    <input type="password" className="input" placeholder="••••••••" />
+                    <input type="password" className="input" placeholder="••••••••" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1.5">新密码</label>
-                    <input type="password" className="input" placeholder="••••••••" />
+                    <input type="password" className="input" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                   </div>
-                  <button className="btn btn-primary">修改密码</button>
+                  <button onClick={handleChangePassword} className="btn btn-primary">修改密码</button>
                 </div>
               )}
               {tab === 'connections' && (

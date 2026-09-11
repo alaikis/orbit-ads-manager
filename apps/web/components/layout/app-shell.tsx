@@ -39,6 +39,7 @@ const menuGroups = [
     { href: '/notifications', label: '通知中心', icon: Bell },
     { href: '/workspaces', label: '工作区管理', icon: Package },
     { href: '/settings/connections', label: '连接凭据', icon: Settings },
+    { href: '/logs', label: '同步日志中心', icon: FileText },
   ]},
 ]
 

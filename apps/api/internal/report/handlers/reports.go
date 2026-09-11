@@ -39,6 +39,27 @@ func GetReportsSummary(c *gin.Context) {
 	httputil.Success(c, summary)
 }
 
+func GetReportsTimeseries(c *gin.Context) {
+	tenantID, _ := c.Get("tenant_id")
+	workspaceID := c.Query("workspace_id")
+	scopeType := c.DefaultQuery("scope_type", "")
+	step := c.DefaultQuery("step", "day")
+
+	var wsID *uint64
+	if workspaceID != "" {
+		id, _ := strconv.ParseUint(workspaceID, 10, 64)
+		wsID = &id
+	}
+
+	svc := report.NewReportService()
+	points, err := svc.GetTimeseries(c.Request.Context(), tenantID.(uint64), scopeType, step, wsID)
+	if err != nil {
+		httputil.InternalError(c, "failed to get timeseries")
+		return
+	}
+	httputil.Success(c, gin.H{"items": points})
+}
+
 func ListReports(c *gin.Context) {
 	tenantID, _ := c.Get("tenant_id")
 	var schedules []model.ReportSchedule
@@ -96,6 +117,7 @@ func RegisterReportRoutes(r *gin.RouterGroup) {
 	reports.Use(tenant.NewTenantMiddleware().Handle())
 	{
 		reports.GET("/summary", auth.RequirePermission("report", "read"), GetReportsSummary)
+		reports.GET("/timeseries", auth.RequirePermission("report", "read"), GetReportsTimeseries)
 		reports.GET("", auth.RequirePermission("report", "read"), ListReports)
 		reports.POST("/export", auth.RequirePermission("report", "export"), ExportReport)
 		reports.GET("/schedules", auth.RequirePermission("report", "read"), ListSchedules)
