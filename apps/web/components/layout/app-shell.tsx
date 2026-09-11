@@ -5,13 +5,10 @@ import { useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   BarChart3,
-  ShoppingBag,
-  Monitor,
   Settings,
   Bell,
   Bot,
   FileText,
-  Store,
   Package,
   Rss,
   ListChecks,
@@ -25,11 +22,6 @@ const menuGroups = [
   { title: '总览', items: [
     { href: '/', label: '工作台', icon: LayoutDashboard },
     { href: '/reports', label: '数据报表', icon: BarChart3 },
-  ]},
-  { title: '连接', items: [
-    { href: '/stores', label: '店铺', icon: Store },
-    { href: '/accounts', label: '广告账户', icon: Monitor },
-    { href: '/settings/connections', label: '连接凭据', icon: Settings },
   ]},
   { title: '资产', items: [
     { href: '/products', label: '商品', icon: Package },
@@ -46,6 +38,7 @@ const menuGroups = [
     { href: '/settings', label: '系统设置', icon: Settings },
     { href: '/notifications', label: '通知中心', icon: Bell },
     { href: '/workspaces', label: '工作区管理', icon: Package },
+    { href: '/settings/connections', label: '连接凭据', icon: Settings },
   ]},
 ]
 
